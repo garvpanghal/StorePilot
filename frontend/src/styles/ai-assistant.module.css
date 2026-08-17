@@ -1,0 +1,375 @@
+/* ================================================================
+   AI Assistant — Component Styles
+   Desktop integrated panel, mobile floating agent, mobile fullscreen
+   ================================================================ */
+
+/* ─── Desktop Integrated Panel ─── */
+.desktopPanel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 28;
+  background: var(--surface);
+  border-left: 0 solid var(--border);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  transition: width .25s ease, opacity .25s ease, visibility .25s ease, border-color .25s ease, background 0.3s ease;
+  outline: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.desktopPanelOpen {
+  width: var(--ai-w);
+  opacity: 1;
+  visibility: visible;
+  border-left: 1px solid var(--border);
+}
+
+/* ─── Header (shared desktop + mobile) ─── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.05), transparent);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headerTitle strong {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.sparkle {
+  font-size: 1.15rem;
+  color: var(--purple);
+  line-height: 1;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── Header buttons ─── */
+.closeBtn,
+.expandBtn,
+.backBtn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  transition: background .15s ease, color .15s ease;
+}
+
+.closeBtn:hover,
+.expandBtn:hover,
+.backBtn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.closeBtn:focus-visible,
+.expandBtn:focus-visible,
+.backBtn:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
+/* ─── Body ─── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Avatar / greeting ─── */
+.avatar {
+  text-align: center;
+  padding-top: 8px;
+}
+
+.avatarIcon {
+  width: 56px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 8px;
+  background: rgba(167, 139, 250, 0.08);
+  color: var(--purple);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.08);
+}
+
+.avatarTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+.avatarDesc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ─── Suggestions ─── */
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.suggestionBtn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.suggestionBtn span {
+  flex: 1;
+}
+
+.suggestionBtn:hover {
+  border-color: var(--purple);
+  color: var(--text);
+  background: rgba(167, 139, 250, 0.06);
+}
+
+.suggestionBtn:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
+/* ─── Footer / Input ─── */
+.footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.inputBar {
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 5px;
+  display: flex;
+  gap: 6px;
+  transition: border-color .15s ease, box-shadow 0.15s ease;
+}
+
+.inputBar:focus-within {
+  border-color: var(--purple);
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.15);
+}
+
+.inputBar input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  min-width: 0;
+  flex: 1;
+  padding: 10px;
+  font-size: 0.85rem;
+}
+
+.inputBar input::placeholder {
+  color: var(--muted);
+}
+
+.sendBtn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--purple);
+  color: #07090D;
+  display: grid;
+  place-items: center;
+  transition: background .15s ease, transform .1s ease;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.sendBtn:hover {
+  background: #b9a2fc;
+}
+
+.sendBtn:active {
+  transform: scale(.97);
+}
+
+.sendBtn:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   Mobile Floating Agent
+   ================================================================ */
+.mobileBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(5, 7, 13, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn .2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.mobileAgent {
+  position: fixed;
+  z-index: 60;
+  right: 12px;
+  bottom: 76px;
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(520px, calc(100vh - 100px));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  animation: agentSlideUp .25s ease both;
+  outline: none;
+  overflow: hidden;
+}
+
+@keyframes agentSlideUp {
+  from { transform: translateY(20px) scale(.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1);     opacity: 1; }
+}
+
+/* ─── Mobile Fullscreen ─── */
+.mobileFullscreen {
+  inset: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  transition: inset .25s ease, width .25s ease, border-radius .25s ease, max-height .25s ease;
+}
+
+/* ─── Responsive adjustments ─── */
+
+/* Tablet: use overlay drawer instead of integrated (no reflow) */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .desktopPanel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.2);
+    z-index: 28;
+  }
+}
+
+/* Mobile agent sizing for small screens */
+@media (max-width: 420px) {
+  .mobileAgent {
+    right: 10px;
+    bottom: 70px;
+    width: min(300px, calc(100vw - 20px));
+    max-height: min(480px, calc(100vh - 90px));
+    border-radius: 14px;
+  }
+  .body { padding: 20px 16px; }
+  .footer { padding: 14px 16px; }
+  .suggestionBtn { padding: 10px 12px; font-size: 0.78rem; }
+  .avatarIcon { width: 48px; height: 38px; font-size: 22px; }
+  .avatarTitle { font-size: 1rem; }
+  .avatarDesc { font-size: 0.78rem; }
+  .inputBar input { padding: 8px; font-size: 0.82rem; }
+  .sendBtn { width: 36px; height: 36px; }
+}
+
+@media (max-width: 390px) {
+  .mobileAgent {
+    right: 8px;
+    bottom: 68px;
+    width: min(290px, calc(100vw - 16px));
+    max-height: min(460px, calc(100vh - 84px));
+    border-radius: 12px;
+  }
+  .header { padding: 14px 16px; }
+  .body { padding: 18px 14px; gap: 18px; }
+  .footer { padding: 12px 14px; }
+  .suggestionBtn { padding: 9px 10px; font-size: 0.76rem; gap: 8px; }
+  .avatarIcon { width: 44px; height: 34px; font-size: 20px; }
+  .avatarTitle { font-size: 0.95rem; }
+  .avatarDesc { font-size: 0.75rem; }
+  .inputBar input { padding: 7px; font-size: 0.8rem; }
+  .sendBtn { width: 34px; height: 34px; }
+}
+
+@media (max-width: 375px) {
+  .mobileAgent {
+    right: 6px;
+    bottom: 64px;
+    width: min(280px, calc(100vw - 12px));
+    max-height: min(440px, calc(100vh - 80px));
+    border-radius: 12px;
+  }
+  .header { padding: 12px 14px; }
+  .headerTitle strong { font-size: 0.9rem; }
+  .body { padding: 16px 12px; gap: 16px; }
+  .footer { padding: 10px 12px; }
+  .suggestionBtn { padding: 8px 9px; font-size: 0.74rem; }
+  .inputBar input { padding: 6px; font-size: 0.78rem; }
+  .sendBtn { width: 32px; height: 32px; }
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .desktopPanel,
+  .mobileAgent,
+  .mobileBackdrop {
+    animation: none !important;
+    transition: none !important;
+  }
+}

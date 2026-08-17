@@ -1,0 +1,96 @@
+"""
+Purchase service — creates purchases with items, updates inventory via inventory_service.
+Uses database transactions so partial failures don't corrupt inventory.
+"""
+from typing import Optional, List
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from app.models.purchase import Purchase, PurchaseItem
+from app.models.product import Product
+from app.models.notification import Notification
+from app.schemas.purchase import PurchaseCreate
+from app.services import inventory_service
+import math
+
+
+def create_purchase(db: Session, data: PurchaseCreate) -> Purchase:
+    """Create a purchase with items and update inventory atomically."""
+    # Calculate totals
+    total = 0
+    purchase_items = []
+    for item_data in data.items:
+        product = db.query(Product).filter(Product.id == item_data.product_id).first()
+        if not product:
+            raise ValueError(f"Product {item_data.product_id} not found")
+
+        subtotal = round(item_data.quantity * item_data.unit_cost, 2)
+        total += subtotal
+
+        purchase_items.append({
+            "product_id": item_data.product_id,
+            "quantity": item_data.quantity,
+            "unit_cost": item_data.unit_cost,
+            "subtotal": subtotal,
+        })
+
+    # Create purchase record
+    purchase = Purchase(
+        supplier_id=data.supplier_id,
+        total=round(total, 2),
+        status="completed",
+        notes=data.notes,
+    )
+    db.add(purchase)
+    db.flush()  # Get the purchase ID
+
+    # Create items and update inventory
+    for item_dict in purchase_items:
+        pi = PurchaseItem(
+            purchase_id=purchase.id,
+            **item_dict,
+        )
+        db.add(pi)
+
+        # Stock in via inventory service
+        inventory_service.stock_in(
+            db=db,
+            product_id=item_dict["product_id"],
+            quantity=item_dict["quantity"],
+            reference_type="purchase",
+            reference_id=purchase.id,
+            notes=f"Purchase #{purchase.id}",
+        )
+
+    # Notification
+    notification = Notification(
+        title="Purchase completed",
+        message=f"Purchase #{purchase.id} completed. Total: ₹{total:,.2f}",
+        type="success",
+    )
+    db.add(notification)
+
+    db.commit()
+    db.refresh(purchase)
+    return purchase
+
+
+def list_purchases(
+    db: Session,
+    page: int = 1,
+    page_size: int = 50,
+) -> dict:
+    query = db.query(Purchase).order_by(Purchase.created_at.desc())
+    total = query.count()
+    purchases = query.offset((page - 1) * page_size).limit(page_size).all()
+
+    return {
+        "items": purchases,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": math.ceil(total / page_size) if page_size > 0 else 0,
+    }
+
+
+def get_purchase(db: Session, purchase_id: int) -> Optional[Purchase]:
+    return db.query(Purchase).filter(Purchase.id == purchase_id).first()
