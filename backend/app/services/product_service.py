@@ -31,6 +31,7 @@ def _to_response(p: Product) -> ProductResponse:
 
 def list_products(
     db: Session,
+    store_id: int,
     search: Optional[str] = None,
     category_id: Optional[int] = None,
     status_filter: Optional[str] = None,
@@ -40,7 +41,7 @@ def list_products(
     page_size: int = 50,
     include_archived: bool = False,
 ) -> ProductListResponse:
-    query = db.query(Product)
+    query = db.query(Product).filter(Product.store_id == store_id)
 
     if not include_archived:
         query = query.filter(Product.is_active == True)
@@ -101,20 +102,20 @@ def list_products(
     )
 
 
-def get_product(db: Session, product_id: int) -> Optional[Product]:
-    return db.query(Product).filter(Product.id == product_id).first()
+def get_product(db: Session, product_id: int, store_id: int) -> Optional[Product]:
+    return db.query(Product).filter(Product.id == product_id, Product.store_id == store_id).first()
 
 
-def create_product(db: Session, data: ProductCreate) -> Product:
-    product = Product(**data.model_dump())
+def create_product(db: Session, data: ProductCreate, store_id: int) -> Product:
+    product = Product(**data.model_dump(), store_id=store_id)
     db.add(product)
     db.commit()
     db.refresh(product)
     return product
 
 
-def update_product(db: Session, product_id: int, data: ProductUpdate) -> Optional[Product]:
-    product = db.query(Product).filter(Product.id == product_id).first()
+def update_product(db: Session, product_id: int, data: ProductUpdate, store_id: int) -> Optional[Product]:
+    product = get_product(db, product_id, store_id)
     if not product:
         return None
     update_data = data.model_dump(exclude_unset=True)
@@ -125,8 +126,8 @@ def update_product(db: Session, product_id: int, data: ProductUpdate) -> Optiona
     return product
 
 
-def delete_product(db: Session, product_id: int) -> str:
-    product = db.query(Product).filter(Product.id == product_id).first()
+def delete_product(db: Session, product_id: int, store_id: int) -> str:
+    product = get_product(db, product_id, store_id)
     if not product:
         return "not_found"
 

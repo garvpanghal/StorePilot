@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.db.session import get_db
-from app.api.deps import get_current_user
-from app.models.user import User
+from app.api.deps import get_current_store_id
 from app.schemas.inventory import InventoryAdjustment, InventoryTransactionResponse, InventoryOverview, LowStockProduct
 from app.services import inventory_service
 
@@ -11,13 +10,13 @@ router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
 
 
 @router.get("/overview", response_model=InventoryOverview)
-def get_overview(db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    return inventory_service.get_inventory_overview(db)
+def get_overview(db: Session = Depends(get_db), store_id: int = Depends(get_current_store_id)):
+    return inventory_service.get_inventory_overview(db, store_id)
 
 
 @router.get("/low-stock", response_model=List[LowStockProduct])
-def get_low_stock(db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    products = inventory_service.get_low_stock_products(db)
+def get_low_stock(db: Session = Depends(get_db), store_id: int = Depends(get_current_store_id)):
+    products = inventory_service.get_low_stock_products(db, store_id)
     return [
         LowStockProduct(
             id=p.id, name=p.name, sku=p.sku,
@@ -34,9 +33,9 @@ def get_history(
     product_id: Optional[int] = None,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    store_id: int = Depends(get_current_store_id),
 ):
-    txns = inventory_service.get_transaction_history(db, product_id, limit)
+    txns = inventory_service.get_transaction_history(db, store_id, product_id, limit)
     return [
         InventoryTransactionResponse(
             id=t.id, product_id=t.product_id,
@@ -50,9 +49,13 @@ def get_history(
 
 
 @router.post("/adjust", response_model=InventoryTransactionResponse, status_code=201)
-def adjust_stock(data: InventoryAdjustment, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
+def adjust_stock(
+    data: InventoryAdjustment,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
     try:
-        txn = inventory_service.adjust_stock(db, data.product_id, data.quantity, data.notes)
+        txn = inventory_service.adjust_stock(db, data.product_id, data.quantity, data.notes, store_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return InventoryTransactionResponse(

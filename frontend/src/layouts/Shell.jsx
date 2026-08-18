@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, Sun, Moon, Bell, ChevronDown, LayoutDashboard, Boxes, Package, ShoppingCart, Truck, BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, X } from 'lucide-react';
+import { Menu, Search, Sun, Moon, Bell, ChevronDown, LayoutDashboard, Boxes, Package, ShoppingCart, Truck, BarChart3, Settings, ChevronLeft, ChevronRight, LogOut, X, Check, Trash2 } from 'lucide-react';
 import AIAssistant from '../components/AIAssistant';
+import OnboardingTour from '../components/OnboardingTour';
+import GettingStartedChecklist from '../components/GettingStartedChecklist';
 import { useAuth } from '../context/AuthContext';
 import { notificationsAPI, searchAPI } from '../api/api';
+import { useToast } from '../context/ToastContext';
 import styles from '../styles/shell.module.css';
 
 /* Sidebar nav — AI Assistant removed from here */
@@ -33,6 +36,11 @@ export default function Shell({ children, theme, onTheme }) {
   const [aiOpen, setAiOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BP);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { showToast } = useToast();
+  const [clearingIds, setClearingIds] = useState([]);
+  const [processingIds, setProcessingIds] = useState([]);
+  const [isClearingAll, setIsClearingAll] = useState(false);
+  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
   const aiTriggerRef = useRef(null);
 
   const popoverRef = useRef(null);
@@ -120,7 +128,9 @@ export default function Shell({ children, theme, onTheme }) {
     try {
       const data = await notificationsAPI.list();
       setNotifications(data || []);
-    } catch {}
+    } catch {
+      showToast("Failed to fetch notifications.", "error");
+    }
     setLoadingNotifications(false);
   };
 
@@ -142,19 +152,82 @@ export default function Shell({ children, theme, onTheme }) {
   };
 
   const handleMarkAllRead = async () => {
+    if (isProcessingBulk) return;
+    setIsProcessingBulk(true);
     try {
       await notificationsAPI.markAllRead();
       setUnreadCount(0);
-      fetchNotifications();
-    } catch {}
+      await fetchNotifications();
+    } catch {
+      showToast("Failed to mark all notifications as read.", "error");
+    } finally {
+      setIsProcessingBulk(false);
+    }
   };
 
   const handleMarkRead = async (id) => {
+    if (processingIds.includes(id)) return;
+    setProcessingIds(prev => [...prev, id]);
     try {
       await notificationsAPI.markRead(id);
-      notificationsAPI.unreadCount().then(res => setUnreadCount(res.unread)).catch(() => {});
-      fetchNotifications();
-    } catch {}
+      
+      // Instantly update unread state locally for responsive UI
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      
+      // Update unread count
+      const res = await notificationsAPI.unreadCount();
+      setUnreadCount(res.unread);
+    } catch {
+      showToast("Failed to mark notification as read.", "error");
+    } finally {
+      setProcessingIds(prev => prev.filter(x => x !== id));
+    }
+  };
+
+  const handleClear = async (id) => {
+    if (processingIds.includes(id)) return;
+    setProcessingIds(prev => [...prev, id]);
+    setClearingIds(prev => [...prev, id]);
+    try {
+      await notificationsAPI.clear(id);
+      
+      // Wait for CSS slideOut animation (250ms) to complete before removing from DOM
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        setClearingIds(prev => prev.filter(x => x !== id));
+        setProcessingIds(prev => prev.filter(x => x !== id));
+      }, 250);
+      
+      // Update unread count in background
+      notificationsAPI.unreadCount()
+        .then(res => setUnreadCount(res.unread))
+        .catch(() => {});
+    } catch {
+      setClearingIds(prev => prev.filter(x => x !== id));
+      setProcessingIds(prev => prev.filter(x => x !== id));
+      showToast("Failed to clear notification.", "error");
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (isProcessingBulk) return;
+    setIsProcessingBulk(true);
+    setIsClearingAll(true);
+    try {
+      await notificationsAPI.clearAll();
+      
+      // Wait for CSS fadeOutCollapse animation (250ms) to complete
+      setTimeout(() => {
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsClearingAll(false);
+        setIsProcessingBulk(false);
+      }, 250);
+    } catch {
+      setIsClearingAll(false);
+      setIsProcessingBulk(false);
+      showToast("Failed to clear all notifications.", "error");
+    }
   };
 
   // 1. Debounce logic for search query
@@ -326,8 +399,8 @@ export default function Shell({ children, theme, onTheme }) {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   };
 
-  // Hide sidebar/header on public pages (landing page and login page)
-  const isPublicPage = loc.pathname === '/' || loc.pathname === '/login';
+  // Hide sidebar/header on public pages (landing page, login page, and signup/register page)
+  const isPublicPage = loc.pathname === '/' || loc.pathname === '/login' || loc.pathname === '/register';
 
   if (isPublicPage) {
     return <div className={styles.app} style={{ display: 'block', minHeight: '100vh' }}>{children}</div>;
@@ -336,7 +409,7 @@ export default function Shell({ children, theme, onTheme }) {
   return (
     <div className={styles.app}>
       <header className={styles.topbar}>
-        <button className={styles.mobileMenu} onClick={() => setMobile(true)} aria-label="Open menu"><Menu size={20} /></button>
+        <button data-tour="mobile-menu" className={styles.mobileMenu} onClick={() => setMobile(true)} aria-label="Open menu"><Menu size={20} /></button>
         <div className={styles.topTitle}>{loc.pathname.split('/')[1]?.replace(/-/g, ' ') || 'Dashboard'}</div>
         <div ref={searchContainerRef} className={styles.search}>
           <Search size={16} />
@@ -435,35 +508,76 @@ export default function Shell({ children, theme, onTheme }) {
         <div className={styles.topActions}>
           <button onClick={onTheme} className={styles.iconButton} aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           <div style={{ position: 'relative' }}>
-            <button ref={bellRef} className={styles.iconButton} aria-label="Notifications" onClick={toggleNotifications}>
+            <button ref={bellRef} data-tour="notifications" className={styles.iconButton} aria-label="Notifications" onClick={toggleNotifications}>
               <Bell size={17} />
               {unreadCount > 0 && <i />}
             </button>
-            {showNotifications && (
-              <div ref={popoverRef} className={styles.notificationPopover}>
-                <div className={styles.popoverHeader}>
-                  <h3>Notifications</h3>
+            <div ref={popoverRef} className={`${styles.notificationPopover} ${showNotifications ? styles.open : ''}`}>
+              <div className={styles.popoverHeader}>
+                <h3>Notifications</h3>
+                <div className={styles.headerActions}>
                   {unreadCount > 0 && (
-                    <button onClick={handleMarkAllRead}>Mark all read</button>
+                    <button 
+                      onClick={handleMarkAllRead} 
+                      disabled={isProcessingBulk}
+                      className={styles.bulkBtn}
+                    >
+                      Mark all read
+                    </button>
                   )}
-                </div>
-                <div className={styles.popoverList}>
-                  {loadingNotifications ? (
-                    <div className={styles.popoverLoading}>Loading...</div>
-                  ) : notifications.length === 0 ? (
-                    <div className={styles.popoverEmpty}>No notifications</div>
-                  ) : (
-                    notifications.map(n => (
-                      <div key={n.id} className={`${styles.notificationItem} ${!n.is_read ? styles.unread : ''}`} onClick={() => !n.is_read && handleMarkRead(n.id)}>
-                        <div className={styles.notificationTitle}>{n.title}</div>
-                        <div className={styles.notificationMessage}>{n.message}</div>
-                        <div className={styles.notificationTime}>{new Date(n.created_at).toLocaleString()}</div>
-                      </div>
-                    ))
+                  {notifications.length > 0 && (
+                    <button 
+                      onClick={handleClearAll} 
+                      disabled={isProcessingBulk}
+                      className={`${styles.bulkBtn} ${styles.clearAllBtn}`}
+                    >
+                      Clear all
+                    </button>
                   )}
                 </div>
               </div>
-            )}
+              <div className={`${styles.popoverList} ${isClearingAll ? styles.clearingAll : ''}`}>
+                {loadingNotifications ? (
+                  <div className={styles.popoverLoading}>Loading...</div>
+                ) : notifications.length === 0 ? (
+                  <div className={styles.popoverEmpty}>No notifications</div>
+                ) : (
+                  notifications.map(n => (
+                    <div 
+                      key={n.id} 
+                      className={`${styles.notificationItem} ${!n.is_read ? styles.unread : ''} ${clearingIds.includes(n.id) ? styles.clearing : ''}`}
+                      onClick={() => !n.is_read && handleMarkRead(n.id)}
+                    >
+                      <div className={styles.notificationHeader}>
+                        <div className={styles.notificationTitle}>{n.title}</div>
+                        <div className={`${styles.notificationActions} ${processingIds.includes(n.id) ? styles.processing : ''}`}>
+                          {!n.is_read && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleMarkRead(n.id); }} 
+                              className={`${styles.actionBtn} ${styles.markReadBtn}`} 
+                              title="Mark as Read"
+                              disabled={processingIds.includes(n.id) || isProcessingBulk}
+                            >
+                              <Check size={14} />
+                            </button>
+                          )}
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleClear(n.id); }} 
+                            className={`${styles.actionBtn} ${styles.clearBtn}`} 
+                            title="Clear Notification"
+                            disabled={processingIds.includes(n.id) || isProcessingBulk}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className={styles.notificationMessage}>{n.message}</div>
+                      <div className={styles.notificationTime}>{new Date(n.created_at).toLocaleString()}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
           <div className={styles.profileWrap}>
             <button ref={profileBtnRef} className={styles.profileButton} onClick={toggleProfile}>
@@ -481,9 +595,9 @@ export default function Shell({ children, theme, onTheme }) {
                   </div>
                 </div>
                 <div className={styles.profileDivider} />
-                <button onClick={() => { setProfile(false); navigate('/settings'); }}>My Profile</button>
-                <button onClick={() => { setProfile(false); navigate('/settings'); }}>Account Settings</button>
-                <button onClick={() => { setProfile(false); navigate('/settings'); }}>Store Settings</button>
+                <button onClick={() => { setProfile(false); navigate('/settings?tab=profile'); }}>My Profile</button>
+                <button onClick={() => { setProfile(false); navigate('/settings?tab=security'); }}>Account Settings</button>
+                <button onClick={() => { setProfile(false); navigate('/settings?tab=store'); }}>Store Settings</button>
                 <div className={styles.profileDivider} />
                 <button onClick={handleSignOut} className={styles.signOutBtn}><LogOut size={14} /> Sign out</button>
               </div>
@@ -501,13 +615,13 @@ export default function Shell({ children, theme, onTheme }) {
           <div className={styles.navIndicator} style={indicatorStyle} />
           <div className={styles.groupLabel}>MAIN</div>
           {main.map(([to, label, Icon]) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobile(false)}>
+            <NavLink key={to} to={to} data-tour={label.toLowerCase()} className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobile(false)}>
               <Icon size={18} />
               <span>{label}</span>
             </NavLink>
           ))}
           <div className={styles.groupLabel}>SYSTEM</div>
-          <NavLink to="/settings" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobile(false)}>
+          <NavLink to="/settings" data-tour="settings" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`} onClick={() => setMobile(false)}>
             <Settings size={18} />
             <span>Settings</span>
           </NavLink>
@@ -571,6 +685,10 @@ export default function Shell({ children, theme, onTheme }) {
           mode="mobile"
         />
       )}
+
+      {/* Onboarding Tour & Getting Started Checklist */}
+      <OnboardingTour />
+      <GettingStartedChecklist />
     </div>
   );
 }

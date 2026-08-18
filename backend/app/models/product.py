@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, DateTime, Integer, Numeric, Text, ForeignKey, Boolean
+from sqlalchemy import String, DateTime, Integer, Numeric, Text, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from app.db.base import Base
@@ -9,8 +9,15 @@ class Product(Base):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    store_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("stores.id", ondelete="CASCADE"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    sku: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    sku: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("store_id", "sku", name="uix_store_product_sku"),
+    )
     category_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
     )

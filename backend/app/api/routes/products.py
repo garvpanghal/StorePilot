@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_store_id
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, ProductListResponse
 from app.services import product_service
@@ -21,40 +21,57 @@ def list_products(
     page_size: int = 50,
     include_archived: bool = False,
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    store_id: int = Depends(get_current_store_id),
 ):
     return product_service.list_products(
-        db, search=search, category_id=category_id,
+        db, store_id=store_id, search=search, category_id=category_id,
         status_filter=status, sort_by=sort_by, sort_order=sort_order,
         page=page, page_size=page_size, include_archived=include_archived,
     )
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-def get_product(product_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    product = product_service.get_product(db, product_id)
+def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    product = product_service.get_product(db, product_id, store_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product_service._to_response(product)
 
 
 @router.post("", response_model=ProductResponse, status_code=201)
-def create_product(data: ProductCreate, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    product = product_service.create_product(db, data)
+def create_product(
+    data: ProductCreate,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    product = product_service.create_product(db, data, store_id)
     return product_service._to_response(product)
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
-def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    product = product_service.update_product(db, product_id, data)
+def update_product(
+    product_id: int,
+    data: ProductUpdate,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    product = product_service.update_product(db, product_id, data, store_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product_service._to_response(product)
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    result = product_service.delete_product(db, product_id)
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    result = product_service.delete_product(db, product_id, store_id)
     if result == "not_found":
         raise HTTPException(status_code=404, detail="Product not found")
     return {"action": result}

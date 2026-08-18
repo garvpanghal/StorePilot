@@ -29,6 +29,7 @@ export default function App() {
         <Shell theme={theme} onTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Login initialMode="signup" />} />
           
           <Route path="/" element={<LandingPage />} />
           

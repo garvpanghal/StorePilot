@@ -13,6 +13,7 @@ from app.api.routes.reports import router as reports_router
 from app.api.routes.notifications import router as notifications_router
 from app.api.routes.ai import router as ai_router
 from app.api.routes.search import router as search_router
+from app.api.routes.users import router as users_router
 
 # Root router for all API endpoints
 api_router = APIRouter()
@@ -32,3 +33,4 @@ api_router.include_router(reports_router)
 api_router.include_router(notifications_router)
 api_router.include_router(ai_router)
 api_router.include_router(search_router)
+api_router.include_router(users_router)

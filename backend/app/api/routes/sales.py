@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.session import get_db
-from app.api.deps import get_current_user
-from app.models.user import User
-from app.schemas.sale import SaleCreate, SaleResponse, SaleListResponse
+from app.api.deps import get_current_store_id
+from app.schemas.sale import SaleCreate, SaleResponse, SaleListResponse, SaleItemResponse
 from app.services import sale_service
 
 router = APIRouter(prefix="/api/sales", tags=["Sales"])
@@ -17,9 +16,9 @@ def list_sales(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    store_id: int = Depends(get_current_store_id),
 ):
-    result = sale_service.list_sales(db, page, page_size, date_from, date_to)
+    result = sale_service.list_sales(db, store_id=store_id, page=page, page_size=page_size, date_from=date_from, date_to=date_to)
     items = []
     for s in result["items"]:
         items.append(SaleResponse(
@@ -32,7 +31,17 @@ def list_sales(
             status=s.status,
             notes=s.notes,
             created_at=s.created_at,
-            items=[],
+            items=[
+                SaleItemResponse(
+                    id=si.id,
+                    product_id=si.product_id,
+                    product_name=si.product.name if si.product else None,
+                    quantity=si.quantity,
+                    unit_price=float(si.unit_price),
+                    subtotal=float(si.subtotal),
+                )
+                for si in s.items
+            ],
             item_count=len(s.items),
         ))
     return SaleListResponse(
@@ -45,11 +54,14 @@ def list_sales(
 
 
 @router.get("/{sale_id}", response_model=SaleResponse)
-def get_sale(sale_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    sale = sale_service.get_sale(db, sale_id)
+def get_sale(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    sale = sale_service.get_sale(db, sale_id, store_id)
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
-    from app.schemas.sale import SaleItemResponse
     return SaleResponse(
         id=sale.id,
         invoice_number=sale.invoice_number,
@@ -76,12 +88,15 @@ def get_sale(sale_id: int, db: Session = Depends(get_db), _user: User = Depends(
 
 
 @router.post("", response_model=SaleResponse, status_code=201)
-def create_sale(data: SaleCreate, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
+def create_sale(
+    data: SaleCreate,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
     try:
-        sale = sale_service.create_sale(db, data)
+        sale = sale_service.create_sale(db, data, store_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    from app.schemas.sale import SaleItemResponse
     return SaleResponse(
         id=sale.id,
         invoice_number=sale.invoice_number,
@@ -105,3 +120,15 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db), _user: User = D
             for si in sale.items
         ],
     )
+
+
+@router.delete("/{sale_id}", status_code=200)
+def delete_sale(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    success = sale_service.delete_sale(db, sale_id, store_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    return {"message": "Sale deleted successfully"}

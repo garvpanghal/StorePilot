@@ -1,0 +1,389 @@
+/* Onboarding Tour Spotlight & Tooltip styles */
+
+.spotlightSvg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9998;
+  transition: opacity 0.3s ease;
+}
+
+.spotlightMaskRect {
+  transition: x 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              y 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              width 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dimmer {
+  fill: rgba(7, 9, 13, 0.75);
+  transition: fill 0.3s ease;
+}
+
+.tooltipCard {
+  position: fixed;
+  z-index: 9999;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: rgba(11, 16, 23, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  pointer-events: auto;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), top 0.25s cubic-bezier(0.4, 0, 0.2, 1), left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.centeredCard {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mobileBottomCard {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 16px !important;
+  right: 16px !important;
+  top: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  transform: none !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tooltipTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.centeredCard .tooltipTitle {
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 14px;
+}
+
+.tooltipBody {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 20px 0;
+}
+
+.centeredCard .tooltipBody {
+  font-size: 1.05rem;
+  margin-bottom: 26px;
+  line-height: 1.6;
+}
+
+.tooltipFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tooltipProgress {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.tooltipActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Tour buttons */
+.btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  outline: none;
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.primaryBtn {
+  background: var(--primary);
+  color: #07090d;
+}
+
+.primaryBtn:hover {
+  background: var(--primary-strong);
+  transform: translateY(-1px);
+}
+
+.secondaryBtn {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.linkBtn {
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 4px 8px;
+}
+
+.linkBtn:hover {
+  color: var(--text);
+}
+
+.centeredActions {
+  justify-content: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.centeredActions .btn {
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+/* ==================== Checklist Widget ==================== */
+
+.checklistWidget {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9990;
+  width: 340px;
+  max-width: calc(100vw - 48px);
+  background: rgba(11, 16, 23, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              opacity 0.25s ease;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Slide in animation */
+.checklistWidget {
+  animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.checklistHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.checklistHeader h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlBtn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s ease;
+}
+
+.controlBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.checklistBody {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checklistItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.checklistItemActive {
+  color: var(--text);
+}
+
+.checklistItemCompleted {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.checkboxContainer {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.checkboxIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.checkboxChecked {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.checklistCompletionMessage {
+  padding: 8px 12px;
+  background: rgba(94, 234, 212, 0.06);
+  border: 1px solid rgba(94, 234, 212, 0.15);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  margin-top: 4px;
+  animation: pulseBg 2s infinite ease-in-out;
+}
+
+@keyframes pulseBg {
+  0%, 100% {
+    border-color: rgba(94, 234, 212, 0.15);
+  }
+  50% {
+    border-color: rgba(94, 234, 212, 0.35);
+  }
+}
+
+/* Collapsed checklist state */
+.collapsedWidget {
+  width: 170px;
+  cursor: pointer;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.collapsedWidget:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-soft);
+}
+
+.collapsedBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.collapsedLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Desktop positioning adjustments to prevent overlap with collapse button or sidebar */
+@media (min-width: 769px) {
+  /* Move it slightly right to clear the sidebar when expanded/collapsed if needed */
+  .checklistWidget {
+    /* Safe placement over the content area */
+    left: calc(var(--sidebar-w) + 24px);
+  }
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .checklistWidget {
+    bottom: 80px; /* Stay clear of mobile bottom controls/AI FAB */
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+  }
+  .collapsedWidget {
+    width: 160px;
+    left: 16px;
+    right: auto;
+  }
+}

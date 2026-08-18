@@ -37,13 +37,13 @@ def _parse_period(period: str) -> tuple:
         return today - timedelta(days=30), now
 
 
-def get_dashboard_stats(db: Session, period: str = "30d") -> DashboardStats:
+def get_dashboard_stats(db: Session, period: str = "30d", store_id: int = None) -> DashboardStats:
     start, end = _parse_period(period)
 
     # Current period revenue
     revenue = (
         db.query(func.coalesce(func.sum(Sale.total), 0))
-        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .scalar()
     )
 
@@ -52,18 +52,18 @@ def get_dashboard_stats(db: Session, period: str = "30d") -> DashboardStats:
         db.query(func.coalesce(func.sum((SaleItem.unit_price - Product.cost_price) * SaleItem.quantity), 0))
         .join(Sale, Sale.id == SaleItem.sale_id)
         .join(Product, Product.id == SaleItem.product_id)
-        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .scalar()
     )
 
     orders = (
         db.query(func.count(Sale.id))
-        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .scalar()
     )
 
-    # Inventory value (only active products)
-    products = db.query(Product).filter(Product.is_active == True).all()
+    # Inventory value (only active products belonging to the store)
+    products = db.query(Product).filter(Product.is_active == True, Product.store_id == store_id).all()
     inv_value = sum(float(p.cost_price) * p.current_stock for p in products)
 
     # Inventory health (% of products with stock above reorder level)
@@ -78,12 +78,12 @@ def get_dashboard_stats(db: Session, period: str = "30d") -> DashboardStats:
 
     prev_revenue = float(
         db.query(func.coalesce(func.sum(Sale.total), 0))
-        .filter(Sale.created_at >= prev_start, Sale.created_at < prev_end, Sale.status == "completed")
+        .filter(Sale.created_at >= prev_start, Sale.created_at < prev_end, Sale.status == "completed", Sale.store_id == store_id)
         .scalar()
     )
     prev_orders = (
         db.query(func.count(Sale.id))
-        .filter(Sale.created_at >= prev_start, Sale.created_at < prev_end, Sale.status == "completed")
+        .filter(Sale.created_at >= prev_start, Sale.created_at < prev_end, Sale.status == "completed", Sale.store_id == store_id)
         .scalar()
     )
 
@@ -104,7 +104,7 @@ def get_dashboard_stats(db: Session, period: str = "30d") -> DashboardStats:
     )
 
 
-def get_sales_overview(db: Session, period: str = "30d") -> List[SalesOverviewPoint]:
+def get_sales_overview(db: Session, period: str = "30d", store_id: int = None) -> List[SalesOverviewPoint]:
     start, end = _parse_period(period)
     period_days = (end - start).days or 1
     prev_start = start - timedelta(days=period_days)
@@ -112,7 +112,7 @@ def get_sales_overview(db: Session, period: str = "30d") -> List[SalesOverviewPo
     # Single database query to load all completed sales in both current and previous periods
     sales = (
         db.query(Sale.created_at, Sale.total)
-        .filter(Sale.created_at >= prev_start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= prev_start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .all()
     )
 
@@ -152,7 +152,7 @@ def get_sales_overview(db: Session, period: str = "30d") -> List[SalesOverviewPo
     return points
 
 
-def get_top_products(db: Session, period: str = "30d", limit: int = 5) -> List[TopProduct]:
+def get_top_products(db: Session, period: str = "30d", limit: int = 5, store_id: int = None) -> List[TopProduct]:
     start, end = _parse_period(period)
 
     # One combined query to fetch total sold and revenue grouped by product_id and product_name
@@ -165,7 +165,7 @@ def get_top_products(db: Session, period: str = "30d", limit: int = 5) -> List[T
         )
         .join(SaleItem, SaleItem.product_id == Product.id)
         .join(Sale, Sale.id == SaleItem.sale_id)
-        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .group_by(Product.id, Product.name)
         .order_by(func.sum(SaleItem.quantity).desc())
         .limit(limit)
@@ -183,7 +183,7 @@ def get_top_products(db: Session, period: str = "30d", limit: int = 5) -> List[T
     return top
 
 
-def get_category_sales(db: Session, period: str = "30d") -> List[CategorySales]:
+def get_category_sales(db: Session, period: str = "30d", store_id: int = None) -> List[CategorySales]:
     start, end = _parse_period(period)
 
     results = (
@@ -194,7 +194,7 @@ def get_category_sales(db: Session, period: str = "30d") -> List[CategorySales]:
         .join(Product, Product.category_id == Category.id)
         .join(SaleItem, SaleItem.product_id == Product.id)
         .join(Sale, Sale.id == SaleItem.sale_id)
-        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed")
+        .filter(Sale.created_at >= start, Sale.created_at <= end, Sale.status == "completed", Sale.store_id == store_id)
         .group_by(Category.name)
         .order_by(func.sum(SaleItem.subtotal).desc())
         .all()
@@ -211,8 +211,8 @@ def get_category_sales(db: Session, period: str = "30d") -> List[CategorySales]:
     ]
 
 
-def get_recent_sales(db: Session, limit: int = 5) -> List[RecentSale]:
-    sales = db.query(Sale).order_by(Sale.created_at.desc()).limit(limit).all()
+def get_recent_sales(db: Session, limit: int = 5, store_id: int = None) -> List[RecentSale]:
+    sales = db.query(Sale).filter(Sale.store_id == store_id).order_by(Sale.created_at.desc()).limit(limit).all()
     result = []
     for s in sales:
         customer_name = s.customer.name if s.customer else "Walk-in Customer"
@@ -227,11 +227,11 @@ def get_recent_sales(db: Session, limit: int = 5) -> List[RecentSale]:
     return result
 
 
-def get_full_dashboard(db: Session, period: str = "30d") -> DashboardData:
+def get_full_dashboard(db: Session, period: str = "30d", store_id: int = None) -> DashboardData:
     return DashboardData(
-        stats=get_dashboard_stats(db, period),
-        sales_overview=get_sales_overview(db, period),
-        top_products=get_top_products(db, period),
-        category_sales=get_category_sales(db, period),
-        recent_sales=get_recent_sales(db),
+        stats=get_dashboard_stats(db, period, store_id),
+        sales_overview=get_sales_overview(db, period, store_id),
+        top_products=get_top_products(db, period, 5, store_id),
+        category_sales=get_category_sales(db, period, store_id),
+        recent_sales=get_recent_sales(db, 5, store_id),
     )

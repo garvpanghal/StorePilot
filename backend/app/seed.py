@@ -42,6 +42,7 @@ def seed():
             full_name="Store Admin",
             hashed_password=hash_password("storepilot123"),
             role="admin",
+            onboarding_completed=True,
         )
         db.add(admin)
         db.flush()

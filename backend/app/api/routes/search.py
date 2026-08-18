@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
 from app.db.session import get_db
-from app.api.deps import get_current_user
-from app.models.user import User
+from app.api.deps import get_current_store_id
 from app.models.product import Product
 from app.models.sale import Sale
 from app.models.purchase import Purchase
@@ -18,14 +17,15 @@ router = APIRouter(prefix="/api/search", tags=["Search"])
 def global_search(
     q: str = Query(..., min_length=2),
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    store_id: int = Depends(get_current_store_id),
 ):
     limit = 5
     pattern = f"%{q}%"
 
-    # 1. Search Products (only active ones)
+    # 1. Search Products (only active ones belonging to the store)
     products_query = db.query(Product).filter(
         and_(
+            Product.store_id == store_id,
             Product.is_active == True,
             or_(
                 Product.name.ilike(pattern),
@@ -34,15 +34,18 @@ def global_search(
         )
     ).limit(limit).all()
 
-    # 2. Search Sales
+    # 2. Search Sales (belonging to the store)
     sales_query = db.query(Sale).outerjoin(Customer).filter(
-        or_(
-            Sale.invoice_number.ilike(pattern),
-            Customer.name.ilike(pattern)
+        and_(
+            Sale.store_id == store_id,
+            or_(
+                Sale.invoice_number.ilike(pattern),
+                Customer.name.ilike(pattern)
+            )
         )
     ).limit(limit).all()
 
-    # 3. Search Purchases
+    # 3. Search Purchases (belonging to the store)
     purchase_filters = [Supplier.name.ilike(pattern)]
     if q.isdigit():
         purchase_filters.append(Purchase.id == int(q))
@@ -52,24 +55,33 @@ def global_search(
         purchase_filters.append(Purchase.id == int(q[1:]))
 
     purchases_query = db.query(Purchase).outerjoin(Supplier).filter(
-        or_(*purchase_filters)
-    ).limit(limit).all()
-
-    # 4. Search Suppliers
-    suppliers_query = db.query(Supplier).filter(
-        or_(
-            Supplier.name.ilike(pattern),
-            Supplier.contact_person.ilike(pattern),
-            Supplier.email.ilike(pattern)
+        and_(
+            Purchase.store_id == store_id,
+            or_(*purchase_filters)
         )
     ).limit(limit).all()
 
-    # 5. Search Customers
+    # 4. Search Suppliers (belonging to the store)
+    suppliers_query = db.query(Supplier).filter(
+        and_(
+            Supplier.store_id == store_id,
+            or_(
+                Supplier.name.ilike(pattern),
+                Supplier.contact_person.ilike(pattern),
+                Supplier.email.ilike(pattern)
+            )
+        )
+    ).limit(limit).all()
+
+    # 5. Search Customers (belonging to the store)
     customers_query = db.query(Customer).filter(
-        or_(
-            Customer.name.ilike(pattern),
-            Customer.email.ilike(pattern),
-            Customer.phone.ilike(pattern)
+        and_(
+            Customer.store_id == store_id,
+            or_(
+                Customer.name.ilike(pattern),
+                Customer.email.ilike(pattern),
+                Customer.phone.ilike(pattern)
+            )
         )
     ).limit(limit).all()
 
