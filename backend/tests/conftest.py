@@ -11,11 +11,20 @@ from app.core.security import hash_password
 # Use in-memory SQLite database for unit tests
 SQLITE_DATABASE_URL = "sqlite://"
 
+from sqlalchemy import event
+
 engine = create_engine(
     SQLITE_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -25,13 +34,26 @@ def db():
     Base.metadata.create_all(bind=engine)
     db_session = TestingSessionLocal()
     
-    # Create a default test user
+    # Create a default test store and user
+    from app.models.store import Store
     from app.models.user import User
+    
+    test_store = Store(
+        name="Test Store",
+        address="Test Address",
+        phone="+919999999999",
+        email="store@test.com"
+    )
+    db_session.add(test_store)
+    db_session.flush()
+
     test_user = User(
         email="test@storepilot.com",
         full_name="Test User",
+        phone="+919999999999",
         hashed_password=hash_password("testpass123"),
         role="admin",
+        store_id=test_store.id,
         is_active=True
     )
     db_session.add(test_user)

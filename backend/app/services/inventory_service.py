@@ -17,9 +17,10 @@ def stock_in(
     reference_type: Optional[str] = None,
     reference_id: Optional[int] = None,
     notes: Optional[str] = None,
+    store_id: Optional[int] = None,
 ) -> InventoryTransaction:
     """Increase stock for a product. Used by purchases and manual adjustments."""
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).filter(Product.id == product_id, Product.store_id == store_id).first()
     if not product:
         raise ValueError(f"Product {product_id} not found")
 
@@ -27,6 +28,7 @@ def stock_in(
 
     txn = InventoryTransaction(
         product_id=product_id,
+        store_id=store_id,
         transaction_type="stock_in",
         quantity=quantity,
         reference_type=reference_type,
@@ -45,9 +47,10 @@ def stock_out(
     reference_id: Optional[int] = None,
     notes: Optional[str] = None,
     allow_negative: bool = False,
+    store_id: Optional[int] = None,
 ) -> InventoryTransaction:
     """Decrease stock for a product. Used by sales."""
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).filter(Product.id == product_id, Product.store_id == store_id).first()
     if not product:
         raise ValueError(f"Product {product_id} not found")
 
@@ -60,6 +63,7 @@ def stock_out(
 
     txn = InventoryTransaction(
         product_id=product_id,
+        store_id=store_id,
         transaction_type="stock_out",
         quantity=quantity,
         reference_type=reference_type,
@@ -69,7 +73,7 @@ def stock_out(
     db.add(txn)
 
     # Check for low stock notifications
-    _check_low_stock(db, product)
+    _check_low_stock(db, product, store_id)
 
     return txn
 
@@ -79,9 +83,10 @@ def adjust_stock(
     product_id: int,
     quantity: int,
     notes: Optional[str] = None,
+    store_id: Optional[int] = None,
 ) -> InventoryTransaction:
     """Manual stock adjustment. Positive = increase, negative = decrease."""
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.query(Product).filter(Product.id == product_id, Product.store_id == store_id).first()
     if not product:
         raise ValueError(f"Product {product_id} not found")
 
@@ -90,6 +95,7 @@ def adjust_stock(
     txn_type = "stock_in" if quantity >= 0 else "stock_out"
     txn = InventoryTransaction(
         product_id=product_id,
+        store_id=store_id,
         transaction_type="adjustment",
         quantity=abs(quantity),
         reference_type="manual",
@@ -99,14 +105,14 @@ def adjust_stock(
     db.commit()
     db.refresh(txn)
 
-    _check_low_stock(db, product)
+    _check_low_stock(db, product, store_id)
 
     return txn
 
 
-def get_inventory_overview(db: Session) -> dict:
+def get_inventory_overview(db: Session, store_id: int) -> dict:
     """Get inventory health overview stats."""
-    products = db.query(Product).all()
+    products = db.query(Product).filter(Product.store_id == store_id).all()
     total = len(products)
     if total == 0:
         return {
@@ -140,11 +146,11 @@ def get_inventory_overview(db: Session) -> dict:
     }
 
 
-def get_low_stock_products(db: Session) -> List[Product]:
+def get_low_stock_products(db: Session, store_id: int) -> List[Product]:
     """Get products at or below reorder level."""
     return (
         db.query(Product)
-        .filter(Product.current_stock <= Product.reorder_level)
+        .filter(Product.current_stock <= Product.reorder_level, Product.store_id == store_id)
         .order_by(Product.current_stock.asc())
         .all()
     )
@@ -152,40 +158,45 @@ def get_low_stock_products(db: Session) -> List[Product]:
 
 def get_transaction_history(
     db: Session,
+    store_id: int,
     product_id: Optional[int] = None,
     limit: int = 100,
 ) -> List[InventoryTransaction]:
     """Get inventory transaction history."""
-    query = db.query(InventoryTransaction)
+    query = db.query(InventoryTransaction).filter(InventoryTransaction.store_id == store_id)
     if product_id:
         query = query.filter(InventoryTransaction.product_id == product_id)
     return query.order_by(InventoryTransaction.created_at.desc()).limit(limit).all()
 
 
-def _check_low_stock(db: Session, product: Product):
+def _check_low_stock(db: Session, product: Product, store_id: Optional[int]):
     """Generate notification if product hits low/critical stock."""
     if product.current_stock <= 0:
         _create_stock_notification(
             db, product, "danger",
             f"{product.name} is OUT OF STOCK!",
-            f"Stock for {product.name} (SKU: {product.sku}) has reached zero. Immediate reorder required."
+            f"Stock for {product.name} (SKU: {product.sku}) has reached zero. Immediate reorder required.",
+            store_id
         )
     elif product.current_stock <= product.reorder_level * 0.5:
         _create_stock_notification(
             db, product, "danger",
             f"Critical stock: {product.name}",
-            f"{product.name} has only {product.current_stock} units left (reorder level: {product.reorder_level})."
+            f"{product.name} has only {product.current_stock} units left (reorder level: {product.reorder_level}).",
+            store_id
         )
     elif product.current_stock <= product.reorder_level:
         _create_stock_notification(
             db, product, "warning",
             f"Low stock: {product.name}",
-            f"{product.name} stock is low at {product.current_stock} units (reorder level: {product.reorder_level})."
+            f"{product.name} stock is low at {product.current_stock} units (reorder level: {product.reorder_level}).",
+            store_id
         )
 
 
-def _create_stock_notification(db: Session, product: Product, ntype: str, title: str, message: str):
+def _create_stock_notification(db: Session, product: Product, ntype: str, title: str, message: str, store_id: Optional[int]):
     notification = Notification(
+        store_id=store_id,
         title=title,
         message=message,
         type=ntype,

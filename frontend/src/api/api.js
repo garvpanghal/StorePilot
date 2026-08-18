@@ -45,6 +45,17 @@ const api = {
 export const authAPI = {
   login: (email, password) => api.post('/api/auth/login', { email, password }),
   me: () => api.get('/api/auth/me'),
+  register: (email, full_name, phone, shop_name, business_type, business_address, password, confirm_password) => api.post('/api/auth/register', { email, full_name, phone, shop_name, business_type, business_address, password, confirm_password }),
+};
+
+// Users & Store Settings
+export const usersAPI = {
+  updateProfile: (full_name, email, phone) => api.put('/api/users/me', { full_name, email, phone }),
+  changePassword: (current_password, new_password) => api.put('/api/users/me/password', { current_password, new_password }),
+  updateStore: (name, business_type, phone, email, address) => api.put('/api/users/me/store', { name, business_type, phone, email, address }),
+  deleteAccount: () => api.delete('/api/users/me'),
+  updateOnboarding: (completed) => api.put('/api/users/me/onboarding', { completed }),
+  getChecklist: () => api.get('/api/users/me/checklist'),
 };
 
 // Products
@@ -64,6 +75,8 @@ export const productsAPI = {
 export const categoriesAPI = {
   list: () => api.get('/api/categories'),
   create: (data) => api.post('/api/categories', data),
+  update: (id, data) => api.put(`/api/categories/${id}`, data),
+  delete: (id) => api.delete(`/api/categories/${id}`),
 };
 
 // Suppliers
@@ -90,6 +103,7 @@ export const salesAPI = {
   },
   get: (id) => api.get(`/api/sales/${id}`),
   create: (data) => api.post('/api/sales', data),
+  delete: (id) => api.delete(`/api/sales/${id}`),
 };
 
 // Purchases
@@ -101,6 +115,7 @@ export const purchasesAPI = {
   },
   get: (id) => api.get(`/api/purchases/${id}`),
   create: (data) => api.post('/api/purchases', data),
+  delete: (id) => api.delete(`/api/purchases/${id}`),
 };
 
 // Inventory
@@ -143,6 +158,8 @@ export const notificationsAPI = {
   unreadCount: () => api.get('/api/notifications/unread-count'),
   markRead: (id) => api.put(`/api/notifications/${id}/read`),
   markAllRead: () => api.put('/api/notifications/read-all'),
+  clear: (id) => api.delete(`/api/notifications/${id}`),
+  clearAll: () => api.delete('/api/notifications'),
 };
 
 // AI

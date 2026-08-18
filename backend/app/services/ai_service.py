@@ -97,10 +97,10 @@ def is_ai_available() -> bool:
     return get_provider().is_available()
 
 
-def build_store_context(db: Session) -> str:
+def build_store_context(db: Session, store_id: int) -> str:
     """Build structured business context for AI from real database data."""
     # Product summary
-    products = db.query(Product).all()
+    products = db.query(Product).filter(Product.store_id == store_id).all()
     total_products = len(products)
     low_stock = [p for p in products if p.stock_status in ("Low Stock", "Critical")]
     out_of_stock = [p for p in products if p.stock_status == "Out of Stock"]
@@ -109,19 +109,19 @@ def build_store_context(db: Session) -> str:
     from datetime import datetime, timedelta, timezone
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     recent_sales = db.query(Sale).filter(
-        Sale.created_at >= thirty_days_ago, Sale.status == "completed"
+        Sale.created_at >= thirty_days_ago, Sale.status == "completed", Sale.store_id == store_id
     ).all()
     total_revenue_30d = sum(float(s.total) for s in recent_sales)
     total_orders_30d = len(recent_sales)
 
     # Top products
-    top = dashboard_service.get_top_products(db, "30d", 10)
+    top = dashboard_service.get_top_products(db, "30d", 10, store_id)
 
     # Category breakdown
-    categories = dashboard_service.get_category_sales(db, "30d")
+    categories = dashboard_service.get_category_sales(db, "30d", store_id)
 
     # Inventory overview
-    inv = inventory_service.get_inventory_overview(db)
+    inv = inventory_service.get_inventory_overview(db, store_id)
 
     context = f"""INVENTORY OVERVIEW:
 - Total products: {total_products}
@@ -157,19 +157,19 @@ TOP SELLING PRODUCTS (Last 30 days):
     return context
 
 
-def chat(db: Session, message: str) -> str:
+def chat(db: Session, message: str, store_id: int) -> str:
     """AI chat — answers questions using real store data as context."""
     provider = get_provider()
     if not provider.is_available():
         return "AI Assistant is not configured. Please set GEMINI_API_KEY in the backend .env file to enable AI features."
 
-    context = build_store_context(db)
+    context = build_store_context(db, store_id)
     return provider.generate(message, context)
 
 
-def get_health_score(db: Session) -> dict:
+def get_health_score(db: Session, store_id: int) -> dict:
     """Deterministic business health score — calculated by app logic, explained by AI."""
-    products = db.query(Product).all()
+    products = db.query(Product).filter(Product.store_id == store_id).all()
     total = len(products) or 1
 
     # Inventory health factors
@@ -184,10 +184,10 @@ def get_health_score(db: Session) -> dict:
     two_weeks_ago = now - timedelta(days=14)
 
     recent_rev = float(db.query(func.coalesce(func.sum(Sale.total), 0)).filter(
-        Sale.created_at >= week_ago, Sale.status == "completed"
+        Sale.created_at >= week_ago, Sale.status == "completed", Sale.store_id == store_id
     ).scalar())
     prev_rev = float(db.query(func.coalesce(func.sum(Sale.total), 0)).filter(
-        Sale.created_at >= two_weeks_ago, Sale.created_at < week_ago, Sale.status == "completed"
+        Sale.created_at >= two_weeks_ago, Sale.created_at < week_ago, Sale.status == "completed", Sale.store_id == store_id
     ).scalar())
 
     # Score calculation (0-100)
@@ -222,13 +222,13 @@ def get_health_score(db: Session) -> dict:
     return {"metrics": metrics, "explanation": explanation}
 
 
-def get_executive_summary(db: Session) -> str:
+def get_executive_summary(db: Session, store_id: int) -> str:
     """Generate an executive summary using real data."""
     provider = get_provider()
     if not provider.is_available():
         return "AI is not configured. Set GEMINI_API_KEY to enable executive summaries."
 
-    context = build_store_context(db)
+    context = build_store_context(db, store_id)
     return provider.generate(
         "Generate a concise executive summary of this store's performance. Include: overall performance, positive trends, problems or risks, and 2-3 recommended actions. Keep it under 200 words.",
         context,
@@ -248,12 +248,12 @@ def explain_chart(db: Session, chart_type: str, chart_data: dict) -> str:
     )
 
 
-def get_recommendations(db: Session) -> list:
+def get_recommendations(db: Session, store_id: int) -> list:
     """Generate AI recommendations based on real business data."""
     provider = get_provider()
     if not provider.is_available():
         # Return deterministic recommendations without AI
-        low_products = inventory_service.get_low_stock_products(db)
+        low_products = inventory_service.get_low_stock_products(db, store_id)
         recs = []
         for p in low_products[:5]:
             recs.append({
@@ -264,7 +264,7 @@ def get_recommendations(db: Session) -> list:
             })
         return recs
 
-    context = build_store_context(db)
+    context = build_store_context(db, store_id)
     # Get AI recommendations as structured text, then parse
     raw = provider.generate(
         "Based on this store data, provide exactly 5 actionable recommendations. Format each as a single line starting with [REORDER], [INVESTIGATE], [OPPORTUNITY], or [WARNING] followed by the recommendation. Reference specific products and numbers.",

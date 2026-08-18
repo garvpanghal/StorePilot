@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.deps import get_current_user
-from app.models.user import User
+from app.api.deps import get_current_store_id
 from app.schemas.purchase import PurchaseCreate, PurchaseResponse, PurchaseListResponse, PurchaseItemResponse
 from app.services import purchase_service
 
@@ -14,9 +13,9 @@ def list_purchases(
     page: int = 1,
     page_size: int = 50,
     db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
+    store_id: int = Depends(get_current_store_id),
 ):
-    result = purchase_service.list_purchases(db, page, page_size)
+    result = purchase_service.list_purchases(db, store_id, page, page_size)
     items = []
     for p in result["items"]:
         items.append(PurchaseResponse(
@@ -27,7 +26,17 @@ def list_purchases(
             status=p.status,
             notes=p.notes,
             created_at=p.created_at,
-            items=[],
+            items=[
+                PurchaseItemResponse(
+                    id=pi.id,
+                    product_id=pi.product_id,
+                    product_name=pi.product.name if pi.product else None,
+                    quantity=pi.quantity,
+                    unit_cost=float(pi.unit_cost),
+                    subtotal=float(pi.subtotal),
+                )
+                for pi in p.items
+            ],
             item_count=len(p.items),
         ))
     return PurchaseListResponse(
@@ -40,8 +49,12 @@ def list_purchases(
 
 
 @router.get("/{purchase_id}", response_model=PurchaseResponse)
-def get_purchase(purchase_id: int, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
-    purchase = purchase_service.get_purchase(db, purchase_id)
+def get_purchase(
+    purchase_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    purchase = purchase_service.get_purchase(db, purchase_id, store_id)
     if not purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
     return PurchaseResponse(
@@ -68,9 +81,13 @@ def get_purchase(purchase_id: int, db: Session = Depends(get_db), _user: User = 
 
 
 @router.post("", response_model=PurchaseResponse, status_code=201)
-def create_purchase(data: PurchaseCreate, db: Session = Depends(get_db), _user: User = Depends(get_current_user)):
+def create_purchase(
+    data: PurchaseCreate,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
     try:
-        purchase = purchase_service.create_purchase(db, data)
+        purchase = purchase_service.create_purchase(db, data, store_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return PurchaseResponse(
@@ -94,3 +111,15 @@ def create_purchase(data: PurchaseCreate, db: Session = Depends(get_db), _user: 
             for pi in purchase.items
         ],
     )
+
+
+@router.delete("/{purchase_id}", status_code=200)
+def delete_purchase(
+    purchase_id: int,
+    db: Session = Depends(get_db),
+    store_id: int = Depends(get_current_store_id),
+):
+    success = purchase_service.delete_purchase(db, purchase_id, store_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Purchase not found")
+    return {"message": "Purchase deleted successfully"}

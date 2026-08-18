@@ -14,24 +14,24 @@ import math
 from datetime import datetime, timezone
 
 
-def _generate_invoice_number(db: Session) -> str:
+def _generate_invoice_number(db: Session, store_id: int) -> str:
     """Generate next invoice number like INV-1001, INV-1002, etc."""
-    last = db.query(Sale).order_by(Sale.id.desc()).first()
+    last = db.query(Sale).filter(Sale.store_id == store_id).order_by(Sale.id.desc()).first()
     next_num = (last.id + 1) if last else 1
     return f"INV-{1000 + next_num}"
 
 
-def create_sale(db: Session, data: SaleCreate) -> Sale:
+def create_sale(db: Session, data: SaleCreate, store_id: int) -> Sale:
     """Create a sale with items and update inventory atomically."""
     # Resolve customer
     customer_id = data.customer_id
     if not customer_id and data.customer_name:
         # Create or find walk-in customer
         customer = (
-            db.query(Customer).filter(Customer.name == data.customer_name).first()
+            db.query(Customer).filter(Customer.name == data.customer_name, Customer.store_id == store_id).first()
         )
         if not customer:
-            customer = Customer(name=data.customer_name)
+            customer = Customer(name=data.customer_name, store_id=store_id)
             db.add(customer)
             db.flush()
         customer_id = customer.id
@@ -40,7 +40,7 @@ def create_sale(db: Session, data: SaleCreate) -> Sale:
     total = 0
     sale_items = []
     for item_data in data.items:
-        product = db.query(Product).filter(Product.id == item_data.product_id).first()
+        product = db.query(Product).filter(Product.id == item_data.product_id, Product.store_id == store_id).first()
         if not product:
             raise ValueError(f"Product {item_data.product_id} not found")
         if product.current_stock < item_data.quantity:
@@ -59,9 +59,10 @@ def create_sale(db: Session, data: SaleCreate) -> Sale:
             "subtotal": subtotal,
         })
 
-    invoice_number = _generate_invoice_number(db)
+    invoice_number = _generate_invoice_number(db, store_id)
 
     sale = Sale(
+        store_id=store_id,
         invoice_number=invoice_number,
         customer_id=customer_id,
         payment_method=data.payment_method,
@@ -84,6 +85,7 @@ def create_sale(db: Session, data: SaleCreate) -> Sale:
             reference_type="sale",
             reference_id=sale.id,
             notes=f"Sale {invoice_number}",
+            store_id=store_id,
         )
 
     db.commit()
@@ -93,12 +95,13 @@ def create_sale(db: Session, data: SaleCreate) -> Sale:
 
 def list_sales(
     db: Session,
+    store_id: int,
     page: int = 1,
     page_size: int = 50,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
 ) -> dict:
-    query = db.query(Sale).order_by(Sale.created_at.desc())
+    query = db.query(Sale).filter(Sale.store_id == store_id).order_by(Sale.created_at.desc())
 
     if date_from:
         query = query.filter(Sale.created_at >= date_from)
@@ -117,5 +120,29 @@ def list_sales(
     }
 
 
-def get_sale(db: Session, sale_id: int) -> Optional[Sale]:
-    return db.query(Sale).filter(Sale.id == sale_id).first()
+def get_sale(db: Session, sale_id: int, store_id: int) -> Optional[Sale]:
+    return db.query(Sale).filter(Sale.id == sale_id, Sale.store_id == store_id).first()
+
+
+def delete_sale(db: Session, sale_id: int, store_id: int) -> bool:
+    """Delete a sale and reverse inventory changes atomically."""
+    sale = db.query(Sale).filter(Sale.id == sale_id, Sale.store_id == store_id).first()
+    if not sale:
+        return False
+    
+    # Reverse inventory: Stock in the products that were sold
+    for item in sale.items:
+        inventory_service.stock_in(
+            db=db,
+            product_id=item.product_id,
+            quantity=item.quantity,
+            reference_type="sale_deletion",
+            reference_id=sale_id,
+            notes=f"Reversed Sale {sale.invoice_number} due to deletion",
+            store_id=store_id,
+        )
+    
+    # Delete sale (cascades to items)
+    db.delete(sale)
+    db.commit()
+    return True

@@ -44,3 +44,16 @@ def get_current_user(
         )
 
     return user
+
+
+def get_current_store_id(current_user: User = Depends(get_current_user)) -> int:
+    """
+    Dependency that extracts the store ID of the authenticated user.
+    Raises 400 Bad Request if the user does not have a store ID.
+    """
+    if current_user.store_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authenticated user is not associated with any store/business.",
+        )
+    return current_user.store_id

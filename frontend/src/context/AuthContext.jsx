@@ -39,8 +39,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateOnboardingState = (completed) => {
+    setUser(prev => prev ? { ...prev, onboarding_completed: completed } : null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth, updateOnboardingState }}>
       {children}
     </AuthContext.Provider>
   );

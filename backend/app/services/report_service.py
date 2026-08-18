@@ -20,8 +20,8 @@ def _date_filter(query, model, date_from: Optional[date], date_to: Optional[date
     return query
 
 
-def sales_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> ReportResponse:
-    query = db.query(Sale).filter(Sale.status == "completed")
+def sales_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, store_id: int = None) -> ReportResponse:
+    query = db.query(Sale).filter(Sale.status == "completed", Sale.store_id == store_id)
     query = _date_filter(query, Sale, date_from, date_to)
     sales = query.order_by(Sale.created_at.desc()).all()
 
@@ -46,7 +46,7 @@ def sales_report(db: Session, date_from: Optional[date] = None, date_to: Optiona
     )
 
 
-def product_performance_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> ReportResponse:
+def product_performance_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, store_id: int = None) -> ReportResponse:
     query = (
         db.query(
             Product.name,
@@ -56,6 +56,7 @@ def product_performance_report(db: Session, date_from: Optional[date] = None, da
         )
         .outerjoin(SaleItem, SaleItem.product_id == Product.id)
         .outerjoin(Sale, Sale.id == SaleItem.sale_id)
+        .filter(Product.store_id == store_id)
     )
     if date_from:
         query = query.filter(Sale.created_at >= date_from)
@@ -81,8 +82,8 @@ def product_performance_report(db: Session, date_from: Optional[date] = None, da
     )
 
 
-def inventory_report(db: Session) -> ReportResponse:
-    products = db.query(Product).order_by(Product.name).all()
+def inventory_report(db: Session, store_id: int = None) -> ReportResponse:
+    products = db.query(Product).filter(Product.store_id == store_id).order_by(Product.name).all()
     rows = []
     total_value = 0
     for p in products:
@@ -107,8 +108,8 @@ def inventory_report(db: Session) -> ReportResponse:
     )
 
 
-def purchase_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> ReportResponse:
-    query = db.query(Purchase)
+def purchase_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, store_id: int = None) -> ReportResponse:
+    query = db.query(Purchase).filter(Purchase.store_id == store_id)
     query = _date_filter(query, Purchase, date_from, date_to)
     purchases = query.order_by(Purchase.created_at.desc()).all()
 
@@ -133,8 +134,8 @@ def purchase_report(db: Session, date_from: Optional[date] = None, date_to: Opti
     )
 
 
-def profit_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None) -> ReportResponse:
-    query = db.query(Sale).filter(Sale.status == "completed")
+def profit_report(db: Session, date_from: Optional[date] = None, date_to: Optional[date] = None, store_id: int = None) -> ReportResponse:
+    query = db.query(Sale).filter(Sale.status == "completed", Sale.store_id == store_id)
     query = _date_filter(query, Sale, date_from, date_to)
     sales = query.all()
 
@@ -145,7 +146,7 @@ def profit_report(db: Session, date_from: Optional[date] = None, date_to: Option
         sale_revenue = float(s.total)
         sale_cost = 0
         for item in s.items:
-            product = db.query(Product).filter(Product.id == item.product_id).first()
+            product = db.query(Product).filter(Product.id == item.product_id, Product.store_id == store_id).first()
             if product:
                 sale_cost += float(product.cost_price) * item.quantity
         profit = sale_revenue - sale_cost
