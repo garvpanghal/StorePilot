@@ -10,11 +10,8 @@ export default function HeroContent({ onClickWatchDemo }) {
         INVENTORY &middot; SALES &middot; INTELLIGENCE
       </div>
       <h1 className={styles.heroTitle}>
-        YOUR STORE<br />
-        HAS A SIGNAL.<br />
-        <span style={{ display: 'block', height: '12px' }}></span>
-        <span className={styles.heroTitleHighlight}>STOREPILOT<br />
-        HELPS YOU SEE IT.</span>
+        YOUR STORE<br className={styles.mobileOnlyBr} /> HAS A SIGNAL.<br />
+        <span className={styles.heroTitleHighlight}>STOREPILOT<br className={styles.mobileOnlyBr} /> HELPS YOU<br className={styles.mobileOnlyBr} /> SEE IT.</span>
       </h1>
       
       <p className={styles.heroDesc}>

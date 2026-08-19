@@ -157,7 +157,7 @@ export default function Settings() {
 
       <div style={{ display: 'flex', gap: '30px', marginTop: '24px', flexWrap: 'wrap' }}>
         {/* Left Tabs Menu */}
-        <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="settingsTabs">
           <button
             onClick={() => handleTabChange('profile')}
             style={{
@@ -226,7 +226,7 @@ export default function Settings() {
         </div>
 
         {/* Right Active Tab Content */}
-        <div className="panel" style={{ flex: '3 1 600px', padding: '30px', minHeight: '400px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+        <div className="panel settingsPanel">
           
           {/* TAB 1: User Profile */}
           {activeTab === 'profile' && (
@@ -277,7 +277,7 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <button className="primary" type="submit" disabled={updatingProfile} style={{ alignSelf: 'flex-start', marginTop: '10px', height: '40px', minWidth: '130px' }}>
+                <button className="primary settingsSaveBtn" type="submit" disabled={updatingProfile}>
                   {updatingProfile ? 'Saving...' : 'Save Changes'}
                 </button>
               </form>
@@ -370,7 +370,7 @@ export default function Settings() {
                   </label>
                 </div>
 
-                <button className="primary" type="submit" disabled={updatingPassword} style={{ alignSelf: 'flex-start', marginTop: '10px', height: '40px', minWidth: '150px' }}>
+                <button className="primary settingsSaveBtn" type="submit" disabled={updatingPassword}>
                   {updatingPassword ? 'Changing...' : 'Update Password'}
                 </button>
               </form>
@@ -476,7 +476,7 @@ export default function Settings() {
                   />
                 </label>
 
-                <button className="primary" type="submit" disabled={updatingStore} style={{ alignSelf: 'flex-start', marginTop: '10px', height: '40px', minWidth: '130px' }}>
+                <button className="primary settingsSaveBtn" type="submit" disabled={updatingStore}>
                   {updatingStore ? 'Saving...' : 'Save Settings'}
                 </button>
               </form>
@@ -500,15 +500,7 @@ export default function Settings() {
           zIndex: 1000,
           backdropFilter: 'blur(4px)',
         }}>
-          <div className="panel" style={{
-            width: '100%',
-            maxWidth: '500px',
-            padding: '30px',
-            borderRadius: '16px',
-            border: '1px solid var(--border)',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-            background: 'var(--bg-card)',
-          }}>
+          <div className="panel settingsPanel" style={{ maxWidth: '500px' }}>
             <h2 style={{ fontSize: '1.25rem', margin: '0 0 16px 0', fontWeight: '700', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <ShieldAlert size={22} />
               <span>Delete Your Account?</span>
@@ -556,7 +548,7 @@ export default function Settings() {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="modalFooterButtons">
               <button
                 type="button"
                 className="secondary"

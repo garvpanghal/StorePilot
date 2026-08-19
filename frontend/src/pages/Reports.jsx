@@ -152,74 +152,49 @@ export default function Reports() {
       </div>
 
       <div className="panel productToolbar" style={{ gap: '10px' }}>
-        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
+        <div className="reportTabsDesktop">
           {REPORTS.map(r => (
             <button
               key={r.id}
               onClick={() => setActiveTab(r.id)}
-              style={{
-                padding: '10px 16px',
-                border: 'none',
-                background: activeTab === r.id ? 'var(--primary-soft)' : 'transparent',
-                color: activeTab === r.id ? 'var(--primary)' : 'var(--muted)',
-                fontWeight: 600,
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: '0.85rem'
-              }}
+              className={activeTab === r.id ? 'reportTabActive' : 'reportTab'}
             >
               {r.title}
             </button>
           ))}
         </div>
 
+        <div className="reportTabsMobile">
+          <span className="reportSelectLabel">Report</span>
+          <select
+            value={activeTab}
+            onChange={e => setActiveTab(e.target.value)}
+            className="filterSelect"
+          >
+            {REPORTS.map(r => (
+              <option key={r.id} value={r.id}>{r.title}</option>
+            ))}
+          </select>
+        </div>
+
         {!currentReport.noDates && (
-          <form onSubmit={handleApplyDates} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+          <form onSubmit={handleApplyDates} className="reportDateForm">
+            <div className="reportDateInputs">
               <input
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                style={{
-                  height: '36px',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  padding: '0 8px',
-                  background: 'var(--surface)',
-                  color: 'var(--text)',
-                  fontSize: '0.8rem'
-                }}
+                className="reportDateInput"
               />
-              <span style={{ color: 'var(--muted)' }}>to</span>
+              <span className="reportDateSeparator">to</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                style={{
-                  height: '36px',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  padding: '0 8px',
-                  background: 'var(--surface)',
-                  color: 'var(--text)',
-                  fontSize: '0.8rem'
-                }}
+                className="reportDateInput"
               />
             </div>
-            <button
-              type="submit"
-              style={{
-                height: '36px',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '0 12px',
-                background: 'var(--surface2)',
-                color: 'var(--text)',
-                fontWeight: '600',
-                fontSize: '0.82rem',
-                cursor: 'pointer'
-              }}
-            >
+            <button type="submit" className="reportDateSubmit">
               Filter
             </button>
           </form>
@@ -262,27 +237,29 @@ export default function Reports() {
 
           {/* Tabular data */}
           <div className="panel productTable">
-            <table>
-              <thead>
-                <tr>
-                  {reportData.columns.map((col, idx) => (
-                    <th key={idx}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {reportData.rows.map((row, rowIdx) => (
-                  <tr key={rowIdx}>
-                    {/* Access object properties in order */}
-                    {Object.values(row).map((val, colIdx) => (
-                      <td key={colIdx}>
-                        {formatValue(reportData.columns[colIdx], val)}
-                      </td>
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    {reportData.columns.map((col, idx) => (
+                      <th key={idx}>{col}</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {reportData.rows.map((row, rowIdx) => (
+                    <tr key={rowIdx}>
+                      {/* Access object properties in order */}
+                      {Object.values(row).map((val, colIdx) => (
+                        <td key={colIdx}>
+                          {formatValue(reportData.columns[colIdx], val)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

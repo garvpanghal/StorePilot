@@ -165,7 +165,7 @@ a {
   }
 }
 
-@media(max-width: 800px) {
+@media(max-width: 768px) {
   :root {
     --space-page: 18px;
     --gap: 14px;
@@ -656,22 +656,119 @@ html[data-theme=dark] .loginError {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile-only Branding Hidden on Desktop */
+.mobileGlows {
+  display: none;
+}
+.mobileHeroHeader {
+  display: none;
+}
+
 @media(max-width: 1024px) {
+  .loginContainer {
+    min-height: 100dvh !important;
+  }
   .loginVisualPanel {
-    display: none;
+    display: none !important;
+  }
+  .mobileGlows {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .mobileHeroHeader {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .mobileHeroHeader h2 {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.03em;
+    margin: 0;
+    color: var(--text);
+  }
+  .mobileHeroSubtitle {
+    display: flex;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 4px;
   }
   .loginFormPanel {
-    flex: 1;
-    min-height: 100vh;
+    flex: 1 !important;
+    padding: 16px 14px !important;
+    min-height: 100dvh !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .loginFormPanel .loginCard {
+    width: min(420px, 100%) !important;
+    padding: 24px 20px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
   }
   .formLogo {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    display: block !important;
+    margin: 0 auto 12px !important;
+    height: 28px !important;
+  }
+  .loginFormHeader {
+    margin-bottom: 16px !important;
+  }
+  .loginFormHeader h1 {
+    font-size: 1.25rem !important;
+    margin-bottom: 4px !important;
+  }
+  .loginFormHeader p {
+    font-size: 0.78rem !important;
+  }
+  .inputField {
+    margin-bottom: 12px !important;
+    gap: 4px !important;
+  }
+  .inputField label {
+    font-size: 0.75rem !important;
+  }
+  .inputField input {
+    height: 38px !important;
+    font-size: 0.85rem !important;
+    padding: 0 12px !important;
+  }
+  .pwdToggle {
+    right: 8px !important;
+  }
+  .loginBtn {
+    height: 40px !important;
+    margin-top: 4px !important;
+    font-size: 0.85rem !important;
+  }
+  .loginHint {
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+    font-size: 0.75rem !important;
+  }
+  .demoCreds {
+    margin-top: 6px !important;
+    gap: 6px !important;
   }
   .backToHome {
-    top: 16px;
-    left: 16px;
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    font-size: 0.75rem !important;
+    padding: 6px 10px !important;
   }
 }
 
@@ -896,5 +993,18 @@ html[data-theme=dark] .toastAi { background: rgba(167, 139, 250, 0.08); color: #
 @media (prefers-reduced-motion: reduce) {
   .toast {
     animation: none !important;
+  }
+}
+
+@media(max-width: 768px) {
+  :root {
+    --topbar: calc(110px + env(safe-area-inset-top, 0px));
+    --space-page: 18px;
+  }
+}
+
+@media(max-width: 420px) {
+  :root {
+    --space-page: 16px;
   }
 }

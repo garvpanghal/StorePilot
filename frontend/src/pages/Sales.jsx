@@ -125,53 +125,55 @@ export default function Sales() {
         </div>
       ) : (
         <div className="panel productTable">
-          <table>
-            <thead>
-              <tr>
-                <th>Invoice</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Payment</th>
-                <th>Date</th>
-                <th style={{ width: 80 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map(s => (
-                <tr key={s.id}>
-                  <td><strong>{s.invoice_number}</strong></td>
-                  <td>{s.customer_name}</td>
-                  <td>{s.item_count} items</td>
-                  <td>₹{Number(s.total).toLocaleString('en-IN')}</td>
-                  <td><span className={`badge ${s.payment_method === 'Cash' ? 'green' : s.payment_method === 'UPI' ? 'amber' : 'green'}`}>{s.payment_method}</span></td>
-                  <td>{new Date(s.created_at).toLocaleString()}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <button className="secondary" onClick={() => openSaleDetails(s)} style={{ fontSize: '0.78rem', padding: '4px 8px', height: 'auto', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>Details</button>
-                      <button className="rowBtn" onClick={() => handleDeleteSale(s.id)} style={{ color: 'var(--danger)', padding: 4 }} title="Delete Sale"><Trash size={14} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {sales.length === 0 && (
+          <div className="tableWrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                      <ShoppingCart size={32} style={{ stroke: 'var(--muted)', opacity: 0.5 }} />
-                      <span>No sales recorded yet. Use the action button above to record your first sale.</span>
-                    </div>
-                  </td>
+                  <th>Invoice</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Payment</th>
+                  <th>Date</th>
+                  <th style={{ width: 80 }} />
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sales.map(s => (
+                  <tr key={s.id}>
+                    <td><strong>{s.invoice_number}</strong></td>
+                    <td>{s.customer_name}</td>
+                    <td>{s.item_count} items</td>
+                    <td>₹{Number(s.total).toLocaleString('en-IN')}</td>
+                    <td><span className={`badge ${s.payment_method === 'Cash' ? 'green' : s.payment_method === 'UPI' ? 'amber' : 'green'}`}>{s.payment_method}</span></td>
+                    <td>{new Date(s.created_at).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="secondary" onClick={() => openSaleDetails(s)} style={{ fontSize: '0.78rem', padding: '4px 8px', height: 'auto', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>Details</button>
+                        <button className="rowBtn" onClick={() => handleDeleteSale(s.id)} style={{ color: 'var(--danger)', padding: 4 }} title="Delete Sale"><Trash size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {sales.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                        <ShoppingCart size={32} style={{ stroke: 'var(--muted)', opacity: 0.5 }} />
+                        <span>No sales recorded yet. Use the action button above to record your first sale.</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {showCreate && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '520px', maxWidth: '100%' }}>
+          <div className="modal" style={{ width: 'min(520px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ margin: 0 }}>New Sale</h2>
               <button type="button" onClick={() => setShowCreate(false)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -193,7 +195,7 @@ export default function Sales() {
               
               <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px', textAlign: 'left' }}>Items</div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, fontWeight: 650, fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 4, textAlign: 'left' }}>
+              <div className="modalItemHeaders" style={{ fontWeight: 650, fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 4, textAlign: 'left' }}>
                 <div>Product</div>
                 <div>Quantity</div>
                 <div>Price (₹)</div>
@@ -201,7 +203,7 @@ export default function Sales() {
               </div>
 
               {form.items.map((it, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <div key={i} className="modalItemRow" style={{ marginBottom: 8 }}>
                   <select value={it.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)} style={{ margin: 0 }} required>
                     <option value="">Select Product</option>
                     {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.current_stock} in stock)</option>)}
@@ -230,13 +232,13 @@ export default function Sales() {
 
       {selectedSaleDetails && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '480px' }}>
+          <div className="modal" style={{ width: 'min(480px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 style={{ margin: 0 }}>Sale Details: {selectedSaleDetails.invoice_number}</h2>
               <button type="button" onClick={() => setSelectedSaleDetails(null)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: '0.88rem', marginBottom: 20, textAlign: 'left' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, fontSize: '0.88rem', marginBottom: 20, textAlign: 'left' }}>
               <div>
                 <div style={{ color: 'var(--muted)', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>Customer</div>
                 <div style={{ fontWeight: 600, marginTop: 2 }}>{selectedSaleDetails.customer_name}</div>

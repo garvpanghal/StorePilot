@@ -127,85 +127,91 @@ export default function Inventory() {
 
       {tab === 'low-stock' && (
         <div className="panel productTable">
-          <table>
-            <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Status</th></tr></thead>
-            <tbody>
-              {lowStock.map(p => (
-                <tr key={p.id}>
-                  <td><strong>{p.name}</strong></td>
-                  <td>{p.sku}</td>
-                  <td>{p.category_name || '—'}</td>
-                  <td>{p.current_stock}</td>
-                  <td>{p.reorder_level}</td>
-                  <td><span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : 'amber'}`}>{p.stock_status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="tableWrap">
+            <table>
+              <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Reorder Level</th><th>Status</th></tr></thead>
+              <tbody>
+                {lowStock.map(p => (
+                  <tr key={p.id}>
+                    <td><strong>{p.name}</strong></td>
+                    <td>{p.sku}</td>
+                    <td>{p.category_name || '—'}</td>
+                    <td>{p.current_stock}</td>
+                    <td>{p.reorder_level}</td>
+                    <td><span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : 'amber'}`}>{p.stock_status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {tab === 'history' && (
         <div className="panel productTable">
-          <table>
-            <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th></tr></thead>
-            <tbody>
-              {history.slice(0, 100).map(t => (
-                <tr key={t.id}>
-                  <td>{new Date(t.created_at).toLocaleString()}</td>
-                  <td>{t.product_name}</td>
-                  <td><span className={`badge ${t.transaction_type === 'stock_in' ? 'green' : t.transaction_type === 'stock_out' ? 'red' : 'amber'}`}>
-                    {t.transaction_type === 'stock_in' ? '↑ Stock In' : t.transaction_type === 'stock_out' ? '↓ Stock Out' : '⟳ Adjustment'}
-                  </span></td>
-                  <td>{t.quantity}</td>
-                  <td>{t.reference_type || '—'}</td>
-                  <td>{t.notes || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="tableWrap">
+            <table>
+              <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th></tr></thead>
+              <tbody>
+                {history.slice(0, 100).map(t => (
+                  <tr key={t.id}>
+                    <td>{new Date(t.created_at).toLocaleString()}</td>
+                    <td>{t.product_name}</td>
+                    <td><span className={`badge ${t.transaction_type === 'stock_in' ? 'green' : t.transaction_type === 'stock_out' ? 'red' : 'amber'}`}>
+                      {t.transaction_type === 'stock_in' ? '↑ Stock In' : t.transaction_type === 'stock_out' ? '↓ Stock Out' : '⟳ Adjustment'}
+                    </span></td>
+                    <td>{t.quantity}</td>
+                    <td>{t.reference_type || '—'}</td>
+                    <td>{t.notes || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {tab === 'overview' && (
         <div className="panel productTable">
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Reorder Level</th>
-                <th>Status</th>
-                <th>Stock Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(p => (
-                <tr key={p.id}>
-                  <td><strong>{p.name}</strong></td>
-                  <td>{p.sku}</td>
-                  <td>{p.category_name || '—'}</td>
-                  <td>{p.current_stock}</td>
-                  <td>{p.reorder_level}</td>
-                  <td>
-                    <span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : p.stock_status === 'Low Stock' ? 'amber' : 'green'}`}>
-                      {p.stock_status}
-                    </span>
-                  </td>
-                  <td>₹{(p.current_stock * p.cost_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                </tr>
-              ))}
-              {products.length === 0 && (
+          <div className="tableWrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
-                    No products found
-                  </td>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Category</th>
+                  <th>Stock</th>
+                  <th>Reorder Level</th>
+                  <th>Status</th>
+                  <th>Stock Value</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map(p => (
+                  <tr key={p.id}>
+                    <td><strong>{p.name}</strong></td>
+                    <td>{p.sku}</td>
+                    <td>{p.category_name || '—'}</td>
+                    <td>{p.current_stock}</td>
+                    <td>{p.reorder_level}</td>
+                    <td>
+                      <span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : p.stock_status === 'Low Stock' ? 'amber' : 'green'}`}>
+                        {p.stock_status}
+                      </span>
+                    </td>
+                    <td>₹{(p.current_stock * p.cost_price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
+                      No products found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

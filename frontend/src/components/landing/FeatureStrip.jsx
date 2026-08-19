@@ -47,28 +47,47 @@ export default function FeatureStrip({ onHoverFeature, activeFeature }) {
 
   return (
     <div className={styles.bottomStrip}>
-      <div className={styles.stripInner} ref={containerRef} onMouseLeave={handleMouseLeave}>
-        {items.map((item, idx) => (
-          <div
-            key={item.id}
-            className={`${styles.stripItem} ${activeFeature === item.id || hoverIndex === idx ? styles.stripItemActive : ''}`}
-            onMouseEnter={() => handleMouseEnter(item.id, idx)}
-          >
-            <div className={`${styles.stripIcon} ${item.id === 'ai' && (activeFeature === 'ai' || hoverIndex === idx) ? styles.stripItemActiveAI : ''}`}>
-              {item.icon}
+      {/* DESKTOP HOVER STRIP */}
+      <div className={styles.bottomStripDesktop}>
+        <div className={styles.stripInner} ref={containerRef} onMouseLeave={handleMouseLeave}>
+          {items.map((item, idx) => (
+            <div
+              key={item.id}
+              className={`${styles.stripItem} ${activeFeature === item.id || hoverIndex === idx ? styles.stripItemActive : ''}`}
+              onMouseEnter={() => handleMouseEnter(item.id, idx)}
+            >
+              <div className={`${styles.stripIcon} ${item.id === 'ai' && (activeFeature === 'ai' || hoverIndex === idx) ? styles.stripItemActiveAI : ''}`}>
+                {item.icon}
+              </div>
+              <div className={styles.stripMeta}>
+                <strong>{item.title}</strong>
+                <span>{item.desc}</span>
+              </div>
             </div>
-            <div className={styles.stripMeta}>
-              <strong>{item.title}</strong>
-              <span>{item.desc}</span>
-            </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Sliding active highlight indicator bar */}
-        <div 
-          className={`${styles.stripIndicator} ${hoverIndex === 3 ? styles.stripIndicatorAI : ''}`} 
-          style={indicatorStyle}
-        />
+          {/* Sliding active highlight indicator bar */}
+          <div 
+            className={`${styles.stripIndicator} ${hoverIndex === 3 ? styles.stripIndicatorAI : ''}`} 
+            style={indicatorStyle}
+          />
+        </div>
+      </div>
+
+      {/* MOBILE EDITORIAL LIST */}
+      <div className={styles.bottomStripMobile}>
+        <div className={styles.mobileFeaturesTitle}>BUILT FOR YOUR STORE</div>
+        <div className={styles.mobileFeaturesList}>
+          {items.map((item, idx) => (
+            <div key={item.id} className={styles.mobileFeatureItem}>
+              <div className={styles.mobileFeatureHeader}>
+                <span className={styles.mobileFeatureNum}>0{idx + 1}</span>
+                <strong className={styles.mobileFeatureName}>{item.title.replace('✦ ', '')}</strong>
+              </div>
+              <p className={styles.mobileFeatureDesc}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, BarChart3, Bot, AlertTriangle, TrendingUp, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../styles/landing.module.css';
-import AIInsight from './AIInsight';
 
 export default function DashboardPreview({ activeFeature, demoTrigger }) {
   const { user } = useAuth();
@@ -134,6 +133,10 @@ export default function DashboardPreview({ activeFeature, demoTrigger }) {
           <div className={styles.previewLogo}>
             <span></span>
             StorePilot Dashboard
+            <div className={styles.desktopAiIndicator}>
+              <Sparkles size={11} />
+              <span>AI</span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <div style={{ width: '120px', height: '14px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px' }}></div>
@@ -224,13 +227,12 @@ export default function DashboardPreview({ activeFeature, demoTrigger }) {
             </div>
           </div>
         </div>
+        {/* Subtle mobile-only AI capability indicator */}
+        <div className={styles.mobileAiIndicator}>
+          <Bot size={12} />
+          <span>AI Enabled</span>
+        </div>
       </div>
-
-      {/* Floating AI Notification Orb */}
-      <AIInsight 
-        active={showAi || activeFeature === 'ai' || demoStep === 4} 
-        onClickNotification={handleNavigationToAI}
-      />
     </div>
   );
 }
