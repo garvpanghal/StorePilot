@@ -399,6 +399,103 @@ export default function Shell({ children, theme, onTheme }) {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   };
 
+  const renderSearch = () => (
+    <div ref={searchContainerRef} className={styles.search}>
+      <Search size={16} />
+      <input 
+        ref={searchInputRef}
+        type="search"
+        placeholder="Search for products, invoices, reports..." 
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+          setShowResults(true);
+        }}
+        onKeyDown={handleSearchKeyDown}
+        onFocus={() => setShowResults(true)}
+        aria-label="Global search"
+        aria-autocomplete="list"
+        aria-controls="global-search-results"
+        aria-expanded={showResults}
+      />
+      <kbd>⌘K</kbd>
+      {showResults && searchQuery.trim().length >= 2 && (
+        <div 
+          id="global-search-results" 
+          className={styles.searchResultsDropdown}
+          role="listbox"
+          aria-label="Search results"
+        >
+          {loadingSearch ? (
+            <div className={styles.searchLoading}>Loading...</div>
+          ) : flatResults.length === 0 ? (
+            <div className={styles.searchEmpty}>No results found for "{searchQuery}"</div>
+          ) : (() => {
+            let globalIdx = 0;
+            return categories.map(cat => {
+              const items = results[cat.key] || [];
+              if (items.length === 0) return null;
+              return (
+                <div key={cat.key} className={styles.searchCategoryGroup}>
+                  <div className={styles.searchCategoryHeader}>{cat.label}</div>
+                  {items.map(item => {
+                    const currentIdx = globalIdx++;
+                    const isSelected = currentIdx === activeIndex;
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`${styles.searchResultItem} ${isSelected ? styles.selectedResultItem : ''}`}
+                        onClick={() => {
+                          navigate(cat.route(item.id));
+                          setShowResults(false);
+                          setSearchQuery('');
+                        }}
+                        onMouseEnter={() => setActiveIndex(currentIdx)}
+                        role="option"
+                        aria-selected={isSelected}
+                      >
+                        {cat.key === 'products' && (
+                          <div className={styles.searchItemContent}>
+                            <strong>{item.name}</strong>
+                            <small>SKU: {item.sku} • Stock: {item.current_stock} units • ₹{item.selling_price.toLocaleString('en-IN')}</small>
+                          </div>
+                        )}
+                        {cat.key === 'sales' && (
+                          <div className={styles.searchItemContent}>
+                            <strong>{item.invoice_number}</strong>
+                            <small>{item.customer_name} • Total: ₹{item.total.toLocaleString('en-IN')}</small>
+                          </div>
+                        )}
+                        {cat.key === 'purchases' && (
+                          <div className={styles.searchItemContent}>
+                            <strong>Purchase Order #{item.id}</strong>
+                            <small>{item.supplier_name} • Total: ₹{item.total.toLocaleString('en-IN')}</small>
+                          </div>
+                        )}
+                        {cat.key === 'suppliers' && (
+                          <div className={styles.searchItemContent}>
+                            <strong>{item.name}</strong>
+                            <small>Contact: {item.contact_person || 'N/A'} • Phone: {item.phone || 'N/A'}</small>
+                          </div>
+                        )}
+                        {cat.key === 'customers' && (
+                          <div className={styles.searchItemContent}>
+                            <strong>{item.name}</strong>
+                            <small>Email: {item.email || 'N/A'} • Phone: {item.phone || 'N/A'}</small>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            });
+          })()}
+        </div>
+      )}
+    </div>
+  );
+
   // Hide sidebar/header on public pages (landing page, login page, and signup/register page)
   const isPublicPage = loc.pathname === '/' || loc.pathname === '/login' || loc.pathname === '/register';
 
@@ -409,103 +506,21 @@ export default function Shell({ children, theme, onTheme }) {
   return (
     <div className={styles.app}>
       <header className={styles.topbar}>
-        <button data-tour="mobile-menu" className={styles.mobileMenu} onClick={() => setMobile(true)} aria-label="Open menu"><Menu size={20} /></button>
-        <div className={styles.topTitle}>{loc.pathname.split('/')[1]?.replace(/-/g, ' ') || 'Dashboard'}</div>
-        <div ref={searchContainerRef} className={styles.search}>
-          <Search size={16} />
-          <input 
-            ref={searchInputRef}
-            type="search"
-            placeholder="Search for products, invoices, reports..." 
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowResults(true);
-            }}
-            onKeyDown={handleSearchKeyDown}
-            onFocus={() => setShowResults(true)}
-            aria-label="Global search"
-            aria-autocomplete="list"
-            aria-controls="global-search-results"
-            aria-expanded={showResults}
-          />
-          <kbd>⌘K</kbd>
-          {showResults && searchQuery.trim().length >= 2 && (
-            <div 
-              id="global-search-results" 
-              className={styles.searchResultsDropdown}
-              role="listbox"
-              aria-label="Search results"
-            >
-              {loadingSearch ? (
-                <div className={styles.searchLoading}>Loading...</div>
-              ) : flatResults.length === 0 ? (
-                <div className={styles.searchEmpty}>No results found for "{searchQuery}"</div>
-              ) : (() => {
-                let globalIdx = 0;
-                return categories.map(cat => {
-                  const items = results[cat.key] || [];
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={cat.key} className={styles.searchCategoryGroup}>
-                      <div className={styles.searchCategoryHeader}>{cat.label}</div>
-                      {items.map(item => {
-                        const currentIdx = globalIdx++;
-                        const isSelected = currentIdx === activeIndex;
-                        return (
-                          <div 
-                            key={item.id} 
-                            className={`${styles.searchResultItem} ${isSelected ? styles.selectedResultItem : ''}`}
-                            onClick={() => {
-                              navigate(cat.route(item.id));
-                              setShowResults(false);
-                              setSearchQuery('');
-                            }}
-                            onMouseEnter={() => setActiveIndex(currentIdx)}
-                            role="option"
-                            aria-selected={isSelected}
-                          >
-                            {cat.key === 'products' && (
-                              <div className={styles.searchItemContent}>
-                                <strong>{item.name}</strong>
-                                <small>SKU: {item.sku} • Stock: {item.current_stock} units • ₹{item.selling_price.toLocaleString('en-IN')}</small>
-                              </div>
-                            )}
-                            {cat.key === 'sales' && (
-                              <div className={styles.searchItemContent}>
-                                <strong>{item.invoice_number}</strong>
-                                <small>{item.customer_name} • Total: ₹{item.total.toLocaleString('en-IN')}</small>
-                              </div>
-                            )}
-                            {cat.key === 'purchases' && (
-                              <div className={styles.searchItemContent}>
-                                <strong>Purchase Order #{item.id}</strong>
-                                <small>{item.supplier_name} • Total: ₹{item.total.toLocaleString('en-IN')}</small>
-                              </div>
-                            )}
-                            {cat.key === 'suppliers' && (
-                              <div className={styles.searchItemContent}>
-                                <strong>{item.name}</strong>
-                                <small>Contact: {item.contact_person || 'N/A'} • Phone: {item.phone || 'N/A'}</small>
-                              </div>
-                            )}
-                            {cat.key === 'customers' && (
-                              <div className={styles.searchItemContent}>
-                                <strong>{item.name}</strong>
-                                <small>Email: {item.email || 'N/A'} • Phone: {item.phone || 'N/A'}</small>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          )}
-        </div>
-        <div className={styles.topActions}>
+        <div className={styles.topbarMainRow}>
+          <div className={styles.topbarLeft}>
+            <button data-tour="mobile-menu" className={styles.mobileMenu} onClick={() => setMobile(true)} aria-label="Open menu"><Menu size={20} /></button>
+            {isMobile ? (
+              <div className={styles.mobileBrand} onClick={() => navigate('/dashboard')}>
+                <img src={theme === 'dark' ? '/assets/logo-light.png' : '/assets/logo-dark.png'} alt="StorePilot" />
+              </div>
+            ) : (
+              <div className={styles.topTitle}>{loc.pathname.split('/')[1]?.replace(/-/g, ' ') || 'Dashboard'}</div>
+            )}
+          </div>
+          
+          {!isMobile && renderSearch()}
+          
+          <div className={styles.topActions}>
           <button onClick={onTheme} className={styles.iconButton} aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           <div style={{ position: 'relative' }}>
             <button ref={bellRef} data-tour="notifications" className={styles.iconButton} aria-label="Notifications" onClick={toggleNotifications}>
@@ -604,6 +619,12 @@ export default function Shell({ children, theme, onTheme }) {
             )}
           </div>
         </div>
+      </div>
+      {isMobile && (
+          <div className={styles.mobileSearchRow}>
+            {renderSearch()}
+          </div>
+        )}
       </header>
 
       <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''} ${mobile ? styles.mobileOpen : ''}`}>

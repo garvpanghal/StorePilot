@@ -197,9 +197,12 @@ export default function Products() {
           <h1 className="pageTitle">Products</h1>
           <p className="pageDesc">Manage your products, stock and pricing.</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="pageTopActions">
           <button className="secondary" onClick={() => { setShowManageCats(true); setError(''); }} style={{ height: '40px', display: 'flex', alignItems: 'center', gap: '6px', padding: '0 16px', borderRadius: '10px', background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer', fontWeight: '600' }}><Edit3 size={15} />Manage Categories</button>
-          <button className="primary" onClick={openAdd}><Plus size={16} />Add Product</button>
+          <button className="primary" onClick={openAdd}>
+            <Plus size={16} />
+            <span className="btnText">Add Product</span>
+          </button>
         </div>
       </div>
 
@@ -208,17 +211,19 @@ export default function Products() {
           <Search size={15} />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search products..." />
         </div>
-        <select value={catFilter} onChange={e => setCatFilter(e.target.value)} className="filterSelect">
-          <option value="">All Categories</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="filterSelect">
-          <option value="">All Status</option>
-          <option value="In Stock">In Stock</option>
-          <option value="Low Stock">Low Stock</option>
-          <option value="Critical">Critical</option>
-          <option value="Out of Stock">Out of Stock</option>
-        </select>
+        <div className="productFilters">
+          <select value={catFilter} onChange={e => setCatFilter(e.target.value)} className="filterSelect">
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="filterSelect">
+            <option value="">All Status</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Critical">Critical</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
         <div className="viewToggle">
           <button className={view === 'table' ? 'selected' : ''} onClick={() => setView('table')}><List size={16} /></button>
           <button className={view === 'grid' ? 'selected' : ''} onClick={() => setView('grid')}><LayoutGrid size={16} /></button>
@@ -248,27 +253,29 @@ export default function Products() {
         </div>
       ) : view === 'table' ? (
         <div className="panel productTable">
-          <table>
-            <thead>
-              <tr><th>Product</th><th>Category</th><th>Price</th><th>Cost</th><th>Stock</th><th>Status</th><th /></tr>
-            </thead>
-            <tbody>
-              {items.map(p => (
-                <tr key={p.id}>
-                  <td><span className="productName"><span className="productIcon"><Package size={15} /></span>{p.name}</span></td>
-                  <td>{p.category_name || '—'}</td>
-                  <td>₹{Number(p.selling_price).toLocaleString('en-IN')}</td>
-                  <td>₹{Number(p.cost_price).toLocaleString('en-IN')}</td>
-                  <td>{p.current_stock}</td>
-                  <td><span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : p.stock_status === 'Low Stock' ? 'amber' : 'green'}`}>{p.stock_status}</span></td>
-                  <td>
-                    <button className="rowBtn" onClick={() => openEdit(p)} title="Edit"><Edit3 size={14} /></button>
-                    <button className="rowBtn" onClick={() => handleDelete(p.id)} title="Delete"><Trash2 size={14} /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr><th>Product</th><th>Category</th><th>Price</th><th>Cost</th><th>Stock</th><th>Status</th><th /></tr>
+              </thead>
+              <tbody>
+                {items.map(p => (
+                  <tr key={p.id}>
+                    <td><span className="productName"><span className="productIcon"><Package size={15} /></span>{p.name}</span></td>
+                    <td>{p.category_name || '—'}</td>
+                    <td>₹{Number(p.selling_price).toLocaleString('en-IN')}</td>
+                    <td>₹{Number(p.cost_price).toLocaleString('en-IN')}</td>
+                    <td>{p.current_stock}</td>
+                    <td><span className={`badge ${p.stock_status === 'Critical' || p.stock_status === 'Out of Stock' ? 'red' : p.stock_status === 'Low Stock' ? 'amber' : 'green'}`}>{p.stock_status}</span></td>
+                    <td>
+                      <button className="rowBtn" onClick={() => openEdit(p)} title="Edit"><Edit3 size={14} /></button>
+                      <button className="rowBtn" onClick={() => handleDelete(p.id)} title="Delete"><Trash2 size={14} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="productGrid">
@@ -288,7 +295,7 @@ export default function Products() {
 
       {showAdd && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '480px' }}>
+          <div className="modal" style={{ width: 'min(480px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ margin: 0 }}>{editItem ? 'Edit Product' : 'Add Product'}</h2>
               <button type="button" onClick={() => setShowAdd(false)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -351,7 +358,7 @@ export default function Products() {
 
       {showManageCats && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '480px' }}>
+          <div className="modal" style={{ width: 'min(480px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ margin: 0 }}>Manage Categories</h2>
               <button type="button" onClick={() => setShowManageCats(false)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>

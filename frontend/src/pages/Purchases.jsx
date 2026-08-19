@@ -123,53 +123,55 @@ export default function Purchases() {
         </div>
       ) : (
         <div className="panel productTable">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Supplier</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th style={{ width: 80 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.map(p => (
-                <tr key={p.id}>
-                  <td><strong>PO-{p.id}</strong></td>
-                  <td>{p.supplier_name || '—'}</td>
-                  <td>{p.item_count} items</td>
-                  <td>₹{Number(p.total).toLocaleString('en-IN')}</td>
-                  <td><span className="badge green">{p.status}</span></td>
-                  <td>{new Date(p.created_at).toLocaleString()}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <button className="secondary" onClick={() => openPurchaseDetails(p)} style={{ fontSize: '0.78rem', padding: '4px 8px', height: 'auto', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>Details</button>
-                      <button className="rowBtn" onClick={() => handleDeletePurchase(p.id)} style={{ color: 'var(--danger)', padding: 4 }} title="Delete Purchase"><X size={14} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {purchases.length === 0 && (
+          <div className="tableWrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                      <Truck size={32} style={{ stroke: 'var(--muted)', opacity: 0.5 }} />
-                      <span>No purchases recorded yet. Start recording purchase orders above.</span>
-                    </div>
-                  </td>
+                  <th>ID</th>
+                  <th>Supplier</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th style={{ width: 80 }} />
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {purchases.map(p => (
+                  <tr key={p.id}>
+                    <td><strong>PO-{p.id}</strong></td>
+                    <td>{p.supplier_name || '—'}</td>
+                    <td>{p.item_count} items</td>
+                    <td>₹{Number(p.total).toLocaleString('en-IN')}</td>
+                    <td><span className="badge green">{p.status}</span></td>
+                    <td>{new Date(p.created_at).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button className="secondary" onClick={() => openPurchaseDetails(p)} style={{ fontSize: '0.78rem', padding: '4px 8px', height: 'auto', borderRadius: '6px', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>Details</button>
+                        <button className="rowBtn" onClick={() => handleDeletePurchase(p.id)} style={{ color: 'var(--danger)', padding: 4 }} title="Delete Purchase"><X size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {purchases.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', color: 'var(--muted)', padding: 32 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                        <Truck size={32} style={{ stroke: 'var(--muted)', opacity: 0.5 }} />
+                        <span>No purchases recorded yet. Start recording purchase orders above.</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {showCreate && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '520px', maxWidth: '100%' }}>
+          <div className="modal" style={{ width: 'min(520px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ margin: 0 }}>New Purchase Order</h2>
               <button type="button" onClick={() => setShowCreate(false)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
@@ -186,7 +188,7 @@ export default function Purchases() {
 
               <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px', textAlign: 'left' }}>Items</div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, fontWeight: 650, fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 4, textAlign: 'left' }}>
+              <div className="modalItemHeaders" style={{ fontWeight: 650, fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 4, textAlign: 'left' }}>
                 <div>Product</div>
                 <div>Quantity</div>
                 <div>Cost (₹)</div>
@@ -194,7 +196,7 @@ export default function Purchases() {
               </div>
 
               {form.items.map((it, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <div key={i} className="modalItemRow" style={{ marginBottom: 8 }}>
                   <select value={it.product_id} onChange={e => updateItem(i, 'product_id', e.target.value)} style={{ margin: 0 }} required>
                     <option value="">Select Product</option>
                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -229,13 +231,13 @@ export default function Purchases() {
 
       {selectedPurchaseDetails && createPortal(
         <div className="modalBackdrop">
-          <div className="modal" style={{ width: '480px' }}>
+          <div className="modal" style={{ width: 'min(480px, 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 style={{ margin: 0 }}>Purchase Details: PO-{selectedPurchaseDetails.id}</h2>
               <button type="button" onClick={() => setSelectedPurchaseDetails(null)} style={{ border: 0, background: 'transparent', color: 'var(--muted)', cursor: 'pointer', padding: 4 }}><X size={18} /></button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: '0.88rem', marginBottom: 20, textAlign: 'left' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, fontSize: '0.88rem', marginBottom: 20, textAlign: 'left' }}>
               <div>
                 <div style={{ color: 'var(--muted)', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>Supplier</div>
                 <div style={{ fontWeight: 600, marginTop: 2 }}>{selectedPurchaseDetails.supplier_name || '—'}</div>

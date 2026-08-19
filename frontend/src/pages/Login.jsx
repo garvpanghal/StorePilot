@@ -219,9 +219,29 @@ export default function Login({ initialMode = 'login' }) {
 
       {/* Right Panel: Form Panel */}
       <div className="loginFormPanel">
+        {/* Glows for mobile background */}
+        <div className="mobileGlows">
+          <div className="glowCyan" />
+          <div className="glowPurple" />
+        </div>
+
         <div className="loginCard">
           <div className="loginFormHeader">
             <img src={logoSrc} alt="StorePilot Logo" className="formLogo" />
+            
+            {/* Mobile-only Hero Header */}
+            <div className="mobileHeroHeader">
+              <h2>
+                SEE YOUR STORE <br />
+                <span className="accentText">CLEARLY.</span>
+              </h2>
+              <div className="mobileHeroSubtitle">
+                <span>● Inventory</span>
+                <span>● Sales</span>
+                <span>● Intelligence</span>
+              </div>
+            </div>
+
             <h1>{isSignUp ? 'Create an account' : 'Welcome back'}</h1>
             <p>{isSignUp ? 'Get started with StorePilot by registering your details' : 'Sign in to your account to manage store pilot metrics'}</p>
           </div>

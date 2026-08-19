@@ -62,32 +62,52 @@ export default function LandingNavbar({ onOpenAbout }) {
 
       {/* MOBILE DRAWER */}
       {mobileOpen && (
-        <div className={styles.mobileMenuDrawer}>
-          <button 
-            onClick={() => { setMobileOpen(false); onOpenAbout(); }} 
-            className={styles.mobileMenuLink}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 0 }}
-          >
-            About StorePilot
-          </button>
-          
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {user ? (
+        <>
+          <div 
+            className={styles.mobileDrawerBackdrop} 
+            onClick={() => setMobileOpen(false)} 
+          />
+          <div className={`${styles.mobileDrawerPanel} ${mobileOpen ? styles.mobileDrawerPanelOpen : ''}`}>
+            <div className={styles.mobileDrawerHeader}>
+              <div className={styles.navLogo} onClick={() => { setMobileOpen(false); navigate('/'); }}>
+                <img src="/assets/logo-light.png" alt="StorePilot" />
+              </div>
               <button 
-                onClick={() => { setMobileOpen(false); handleNavigationToDashboard(); }} 
-                className={styles.trialBtn} 
-                style={{ justifyContent: 'center' }}
+                className={styles.drawerCloseBtn} 
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close menu"
               >
-                Open StorePilot
+                <X size={20} />
               </button>
-            ) : (
-              <>
-                <RouterLink to="/login" onClick={() => setMobileOpen(false)} className={styles.signInBtn} style={{ textAlign: 'center' }}>Sign In</RouterLink>
-                <RouterLink to="/login" onClick={() => setMobileOpen(false)} className={styles.trialBtn} style={{ justifyContent: 'center' }}>Open StorePilot</RouterLink>
-              </>
-            )}
+            </div>
+            
+            <nav className={styles.mobileDrawerNav}>
+              <RouterLink to="/" onClick={() => setMobileOpen(false)} className={styles.mobileNavLink}>Home</RouterLink>
+              <button 
+                onClick={() => { setMobileOpen(false); onOpenAbout(); }} 
+                className={styles.mobileNavLinkBtn}
+              >
+                Features & About
+              </button>
+              
+              <div className={styles.mobileNavDivider} />
+              
+              {user ? (
+                <button 
+                  onClick={() => { setMobileOpen(false); handleNavigationToDashboard(); }} 
+                  className={styles.mobileNavBtnPrimary}
+                >
+                  Open Dashboard
+                </button>
+              ) : (
+                <>
+                  <RouterLink to="/login" onClick={() => setMobileOpen(false)} className={styles.mobileNavLinkAccent}>Sign In</RouterLink>
+                  <RouterLink to="/login" onClick={() => setMobileOpen(false)} className={styles.mobileNavBtnPrimary}>Get Started</RouterLink>
+                </>
+              )}
+            </nav>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

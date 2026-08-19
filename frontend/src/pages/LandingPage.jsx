@@ -59,14 +59,14 @@ export default function LandingPage() {
         />
       </main>
 
-      <div className={styles.bottomStripOuter}>
+      <div className={`${styles.container} ${styles.bottomStripOuter}`}>
         <FeatureStrip 
           onHoverFeature={handleHoverFeature} 
           activeFeature={activeFeature}
         />
       </div>
 
-      <div className={styles.trustStatement}>
+      <div className={`${styles.container} ${styles.trustStatement}`}>
         <span className={styles.trustIcon}>◇</span> Built for store owners who want to run their business smarter.
       </div>
 
